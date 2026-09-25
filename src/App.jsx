@@ -1,12 +1,18 @@
-// Root component, theme provider, section assembly
+import Layout from './components/layout/Layout';
+import Navbar from './components/layout/Navbar';
+import StaticNeuromesh from './components/layout/StaticNeuromesh';
+import Hero from './components/sections/Hero';
+import About from './components/sections/About';
+import Products from './components/sections/Products';
+
 export default function App() {
   return (
-    <div>
-      {/* Navbar goes here */}
-      <main>
-        {/* Sections: Hero, About, Products, Projects, Skills, Contact go here */}
-      </main>
-      {/* Footer goes here */}
-    </div>
-  )
+    <Layout>
+      <StaticNeuromesh/>
+      <Navbar/>
+      <Hero/>
+      <About/>
+      <Products/>
+    </Layout>
+  );
 }
