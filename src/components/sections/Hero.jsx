@@ -8,9 +8,9 @@
  */
 export default function Hero() {
   return (
-    <section className="relative w-full min-h-screen flex flex-col justify-center px-6 md:px-16 lg:px-24">
+    <section className="relative w-full h-screen flex flex-col justify-center px-6 md:px-16 lg:px-24">
       {/* Massive Typography - Flush Left */}
-      <div className="flex flex-col mt-20">
+      <div className="flex flex-col mt-0">
         <h1 className="text-[12vw] leading-[0.85] font-black tracking-tighter text-[#0A0A0A] dark:text-white m-0 p-0">
           Muhammad
         </h1>

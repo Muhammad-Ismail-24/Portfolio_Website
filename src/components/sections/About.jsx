@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 
 export default function About() {
   return (
-    <section className="relative z-10 w-full min-h-[100vh] flex items-center px-6 md:px-16 lg:px-24">
+    <section className="relative z-10 w-full h-screen flex items-center px-6 md:px-16 lg:px-24 py-20">
       <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
         
         {/* Left Column: Typography & Buttons */}
@@ -40,7 +40,7 @@ export default function About() {
               <img 
                 src="/assets/profile.jpeg" 
                 alt="Muhammad Ismail" 
-                className="w-[300px] md:w-[400px] aspect-square object-cover grayscale-0 hover:grayscale transition-all duration-500" 
+                className="w-[280px] lg:w-[350px] max-h-[50vh] aspect-square object-cover grayscale-0 hover:grayscale transition-all duration-500" 
               />
             </div>
             <p className="mt-3 text-sm font-mono text-[#555555] dark:text-[#A0A0A0]">

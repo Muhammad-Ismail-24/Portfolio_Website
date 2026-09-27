@@ -4,6 +4,10 @@ import StaticNeuromesh from './components/layout/StaticNeuromesh';
 import Hero from './components/sections/Hero';
 import About from './components/sections/About';
 import Products from './components/sections/Products';
+import FeaturedProjects from './components/sections/FeaturedProjects';
+import Capabilities from './components/sections/Capabilities';
+import Services from './components/sections/Services';
+import Contact from './components/sections/Contact';
 
 export default function App() {
   return (
@@ -13,6 +17,10 @@ export default function App() {
       <Hero/>
       <About/>
       <Products/>
+      <FeaturedProjects/>
+      <Capabilities/>
+      <Services/>
+      <Contact/>
     </Layout>
   );
 }

@@ -91,7 +91,7 @@ export default function Products() {
   return (
     <section
       ref={carouselRef}
-      className="min-h-screen relative flex flex-col items-center justify-center pt-24 z-10"
+      className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden pt-16"
     >
       {/* ── Heading ─────────────────────────── */}
       <h2 className="text-[10vw] lg:text-[8vw] leading-none font-black tracking-tighter text-[#0A0A0A] dark:text-white select-none">
@@ -99,7 +99,7 @@ export default function Products() {
       </h2>
 
       {/* ── Fanned Card Carousel ────────────── */}
-      <div className="relative w-full flex items-center justify-center mt-16" style={{ height: 440 }}>
+      <div className="relative w-full flex items-center justify-center h-[55vh] min-h-[350px] mt-4">
         {products.map((product, index) => {
           let offset = index - activeIndex;
           const half = Math.floor(products.length / 2);
@@ -120,7 +120,7 @@ export default function Products() {
               }}
               transition={{ type: 'spring', stiffness: 260, damping: 26 }}
               style={{ zIndex: anim.zIndex }}
-              className="w-[300px] h-[400px] absolute bg-[#F5F3EC] dark:bg-[#0A0F1E] border border-[#0A0A0A] dark:border-white/30 rounded-xl overflow-hidden cursor-pointer shadow-xl"
+              className="w-[280px] lg:w-[320px] h-full absolute bg-[#F5F3EC] dark:bg-[#080A17] border border-[#0A0A0A] dark:border-[#2A2A34] rounded-xl overflow-hidden cursor-pointer shadow-xl dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
               onClick={() => {
                 if (offset === 0) {
                   setIsModalOpen(true);
@@ -129,29 +129,29 @@ export default function Products() {
                 }
               }}
             >
-              {/* Card inner content */}
-              <div className="h-[55%] w-full bg-[#E8E4D9] dark:bg-[#111827] flex items-center justify-center">
-                <img
-                  src={product.image}
-                  alt={`${product.word1}${product.word2}`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              </div>
+              {/* Card Inner Structure */}
+              <div className="w-full h-full flex flex-col p-4">
+                {/* Top Image Mockup Placeholder */}
+                <div className="w-full h-[55%] bg-[#1A1A1A] rounded-lg shadow-inner overflow-hidden">
+                  {/* Later, you can place an actual <img /> here */}
+                </div>
 
-              <div className="p-5">
-                <h3 className="text-xl font-black text-[#0A0A0A] dark:text-white leading-tight">
-                  {product.word1}
-                  <span className="text-hollow">{product.word2}</span>
-                </h3>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-[#888888] dark:text-[#666666]">
-                  {product.subtitle}
-                </p>
-                <p className="mt-3 text-sm text-[#555555] dark:text-[#A0A0A0] line-clamp-3 leading-relaxed">
-                  {product.description}
-                </p>
+                {/* Bottom Text Content */}
+                <div className="flex flex-col mt-5 px-4 pb-4 text-left">
+                  <h3 className="text-2xl font-black text-[#0A0A0A] dark:text-white leading-tight tracking-tight">
+                    {product.word1}{product.word2}
+                  </h3>
+
+                  {/* Subtitle - Small, uppercase, tracked out */}
+                  <p className="text-[10px] font-bold text-[#888888] dark:text-[#64748B] mt-1 tracking-widest uppercase">
+                    {product.subtitle}
+                  </p>
+
+                  {/* Description - Fills the empty space, clamped to 3 lines */}
+                  <p className="text-sm font-medium text-[#555555] dark:text-[#94A3B8] mt-4 leading-relaxed line-clamp-3">
+                    {product.description}
+                  </p>
+                </div>
               </div>
             </motion.div>
           );
@@ -181,8 +181,7 @@ export default function Products() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md p-6"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#F4EFE6]/60 dark:bg-[#07090F]/70 backdrop-blur-xl p-4 md:p-8"
             onClick={() => setIsModalOpen(false)}
           >
             <motion.div
@@ -191,7 +190,7 @@ export default function Products() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              className="w-full max-w-5xl bg-[#F5F3EC] dark:bg-[#07090F] border border-[#0A0A0A] dark:border-white/30 rounded-2xl flex flex-col lg:flex-row overflow-y-auto max-h-[90vh] shadow-2xl relative"
+              className="w-full max-w-5xl bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-[#0A0A0A] dark:border-[#2A2A34] rounded-3xl flex flex-col lg:flex-row overflow-y-auto max-h-[90vh] shadow-2xl relative"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -203,8 +202,8 @@ export default function Products() {
               </button>
 
               {/* Left Column — Image */}
-              <div className="w-full lg:w-1/2 p-6 lg:p-12 flex items-center justify-center bg-[#E8E4D9] dark:bg-[#111827]">
-                <div className="w-full aspect-video rounded-lg overflow-hidden border border-[#0A0A0A]/10 dark:border-white/10 shadow-lg">
+              <div className="w-full lg:w-1/2 p-6 lg:p-12 flex items-center justify-center bg-[#E8E4D9] dark:bg-[#080A17]">
+                <div className="w-full aspect-video rounded-lg overflow-hidden border border-[#0A0A0A]/10 dark:border-[#2A2A34] shadow-lg">
                   <img
                     src={activeProduct.image}
                     alt={`${activeProduct.word1}${activeProduct.word2}`}
@@ -218,19 +217,19 @@ export default function Products() {
 
               {/* Right Column — Content */}
               <div className="w-full lg:w-1/2 p-6 lg:p-12 flex flex-col justify-center">
-                <div className="flex flex-row flex-wrap items-center gap-2">
-                  <span className="font-black text-5xl md:text-6xl text-[#0A0A0A] dark:text-white">
+                <div className="flex flex-row flex-wrap items-center gap-x-2">
+                  <span className="font-black text-5xl md:text-7xl tracking-tighter text-[#0A0A0A] dark:text-white uppercase">
                     {activeProduct.word1}
                   </span>
-                  <span className="font-black text-5xl md:text-6xl text-hollow">
+                  <span className="font-black text-5xl md:text-7xl tracking-tighter text-hollow uppercase">
                     {activeProduct.word2}
                   </span>
                 </div>
-                <p className="mt-2 text-sm font-semibold uppercase tracking-widest text-[#888888] dark:text-[#666666]">
+                <p className="mt-2 text-sm font-semibold uppercase tracking-widest text-[#888888] dark:text-[#64748B]">
                   {activeProduct.subtitle}
                 </p>
 
-                <p className="mt-6 text-lg text-[#555555] dark:text-[#A0A0A0] leading-relaxed">
+                <p className="mt-6 text-lg text-[#555555] dark:text-[#94A3B8] leading-relaxed">
                   {activeProduct.description}
                 </p>
 
