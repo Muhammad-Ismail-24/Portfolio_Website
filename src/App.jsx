@@ -1,3 +1,4 @@
+import { ReactLenis } from '@studio-freight/react-lenis'
 import Layout from './components/layout/Layout';
 import Navbar from './components/layout/Navbar';
 import StaticNeuromesh from './components/layout/StaticNeuromesh';
@@ -11,16 +12,18 @@ import Contact from './components/sections/Contact';
 
 export default function App() {
   return (
-    <Layout>
-      <StaticNeuromesh/>
-      <Navbar/>
-      <Hero/>
-      <About/>
-      <Products/>
-      <FeaturedProjects/>
-      <Capabilities/>
-      <Services/>
-      <Contact/>
-    </Layout>
+    <ReactLenis root options={{ lerp: 0.1, smoothWheel: true, wheelMultiplier: 1.2 }}>
+      <Layout>
+        <StaticNeuromesh/>
+        <Navbar/>
+        <Hero/>
+        <About/>
+        <Products/>
+        <FeaturedProjects/>
+        <Capabilities/>
+        <Services/>
+        <Contact/>
+      </Layout>
+    </ReactLenis>
   );
 }
