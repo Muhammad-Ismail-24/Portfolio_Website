@@ -17,10 +17,12 @@ import * as THREE from 'three'
        shrink while the mesh moves.
 
    MOTION
-     • No rigid rotation. Every node circles on its own small orbit, so each
-       strand swings and rotates by itself.
+     • Every node circles on its own small orbit, so each strand swings and
+       rotates by itself.
+     • On top of that, the whole mesh turns gently clockwise about the screen
+       centre as you scroll down (SPIN_DEG_PER_1000PX), anticlockwise going up.
      • Orbit phases form a wave along the diagonal; scrolling pushes it forward
-       through the mesh (bottom-left → top-right), scrolling up reverses it.
+       through the mesh (top-right → bottom-left), scrolling up reverses it.
      • At scroll 0 every node sits exactly on its original position.
    ════════════════════════════════════════════════════════════════════════════ */
 
@@ -53,8 +55,9 @@ const PX_PER_TURN = 1200  // scroll pixels for one full orbit (smaller = faster)
 const ORBIT_MIN = 28      // smallest orbit radius (original SVG units)
 const ORBIT_MAX = 50      // largest orbit radius
 const WAVE_CYCLES = 2.5   // wave crests along the diagonal (more = tighter ripple)
-const DAMPING = 5         // scroll smoothing (lower = silkier, higher = snappier)
+const DAMPING = 10        // scroll smoothing (lower = silkier, higher = snappier)
 const CLOCKWISE = true    // direction each node circles as you scroll down (false = anticlockwise)
+const SPIN_DEG_PER_1000PX = 8 // clockwise turn of the whole mesh per 1000px scrolled (0 = off)
 const SEED = 7            // same seed → same motion every load
 
 // ─── Nodes: exact positions from the original SVG ───────────────────────────
@@ -446,9 +449,11 @@ function NeuromeshScene() {
       turn = Math.atan2(-visH, -visW) - scene.hubAngle
       turn = Math.atan2(Math.sin(turn), Math.cos(turn)) // wrap to (-π, π]
     }
+    // Gentle whole-mesh spin; negative z = clockwise on screen (world is y-up)
+    const spin = -(current.current / 1000) * SPIN_DEG_PER_1000PX * (Math.PI / 180)
     if (groupRef.current) {
       groupRef.current.scale.setScalar(fitScale)
-      groupRef.current.rotation.z = turn
+      groupRef.current.rotation.z = turn + spin
     }
 
     scene.edgeMat.uniforms.uRes.value.set(W, H)
@@ -457,8 +462,8 @@ function NeuromeshScene() {
     scene.nodeMat.uniforms.uPxRatio.value = state.gl.getPixelRatio()
 
     // Scroll distance → orbit angle (shared by all nodes; phases differ per node).
-    // Negated so scrolling down drives the motion forward clockwise.
-    scene.update(-(current.current / PX_PER_TURN) * Math.PI * 2)
+    // Positive = scrolling down drives the motion forward clockwise (with CLOCKWISE = true).
+    scene.update((current.current / PX_PER_TURN) * Math.PI * 2)
   })
 
   return (
@@ -479,9 +484,9 @@ export default function StaticNeuromesh() {
       <Canvas
         orthographic
         frameloop="demand"
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
         camera={{ position: [0, 0, 10], zoom: 1, near: 0.1, far: 100 }}
-        gl={{ antialias: false, alpha: true, powerPreference: 'low-power' }}
+        gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
         style={{ background: 'transparent' }}
       >
         <NeuromeshScene />
