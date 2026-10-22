@@ -1,6 +1,6 @@
 export default function Capabilities() {
   return (
-    <section className="relative w-full h-screen flex flex-col items-center justify-center pt-16 pb-6 px-6 md:px-16 lg:px-24 z-10 overflow-hidden">
+    <section id="stack" className="relative w-full h-screen flex flex-col items-center justify-center pt-16 pb-6 px-6 md:px-16 lg:px-24 z-10 overflow-hidden">
       {/* Header */}
       <div className="flex flex-row flex-wrap justify-center gap-x-4 mb-4">
         <span className="text-[9vw] lg:text-[5.5vw] font-black tracking-tighter text-[#0A0A0A] dark:text-white leading-none">

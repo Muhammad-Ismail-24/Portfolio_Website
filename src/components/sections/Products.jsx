@@ -90,6 +90,7 @@ export default function Products() {
   /* ── Render ─────────────────────────────── */
   return (
     <section
+      id="portfolio"
       ref={carouselRef}
       className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden pt-16"
     >

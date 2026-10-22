@@ -1,4 +1,5 @@
 import { useTheme } from '../../hooks/useTheme'
+import { useSmoothScroll } from '../../hooks/useSmoothScroll'
 
 /**
  * Navbar — Frosted glass navigation pill.
@@ -8,6 +9,7 @@ import { useTheme } from '../../hooks/useTheme'
  */
 export default function Navbar() {
   const { isDark, toggleTheme } = useTheme()
+  const scrollToSection = useSmoothScroll()
 
   const links = ['Portfolio', 'About', 'Stack', 'Services', 'Contact']
 
@@ -30,6 +32,7 @@ export default function Navbar() {
           <a
             key={link}
             href={`#${link.toLowerCase()}`}
+            onClick={(e) => scrollToSection(e, link.toLowerCase())}
             className={`
               px-4 py-2 text-sm font-medium
               rounded-full

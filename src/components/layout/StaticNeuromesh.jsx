@@ -17,10 +17,9 @@ import * as THREE from 'three'
        shrink while the mesh moves.
 
    MOTION
-     • Every node circles on its own small orbit, so each strand swings and
-       rotates by itself.
-     • On top of that, the whole mesh turns gently clockwise about the screen
-       centre as you scroll down (SPIN_DEG_PER_1000PX), anticlockwise going up.
+     • No rigid rotation — the mesh always stays on the diagonal. Every node
+       circles clockwise on its own small orbit, so each strand swings and
+       rotates by itself, and each cluster swirls clockwise as you scroll down.
      • Orbit phases form a wave along the diagonal; scrolling pushes it forward
        through the mesh (top-right → bottom-left), scrolling up reverses it.
      • At scroll 0 every node sits exactly on its original position.
@@ -57,8 +56,10 @@ const ORBIT_MAX = 50      // largest orbit radius
 const WAVE_CYCLES = 2.5   // wave crests along the diagonal (more = tighter ripple)
 const DAMPING = 10        // scroll smoothing (lower = silkier, higher = snappier)
 const CLOCKWISE = true    // direction each node circles as you scroll down (false = anticlockwise)
-const SPIN_DEG_PER_1000PX = 8 // clockwise turn of the whole mesh per 1000px scrolled (0 = off)
-const SEED = 7            // same seed → same motion every load
+const SEED = 5664         // same seed → same motion every load. This one is picked so both hubs,
+                          // the bridge and the strands all swirl clockwise at every scroll position
+                          // (most seeds rock back and forth; e.g. 7 turned the top-right hub
+                          // anticlockwise for the first ~150px). Changing it changes that.
 
 // ─── Nodes: exact positions from the original SVG ───────────────────────────
 const RAW_NODES = [
@@ -449,11 +450,9 @@ function NeuromeshScene() {
       turn = Math.atan2(-visH, -visW) - scene.hubAngle
       turn = Math.atan2(Math.sin(turn), Math.cos(turn)) // wrap to (-π, π]
     }
-    // Gentle whole-mesh spin; negative z = clockwise on screen (world is y-up)
-    const spin = -(current.current / 1000) * SPIN_DEG_PER_1000PX * (Math.PI / 180)
     if (groupRef.current) {
       groupRef.current.scale.setScalar(fitScale)
-      groupRef.current.rotation.z = turn + spin
+      groupRef.current.rotation.z = turn
     }
 
     scene.edgeMat.uniforms.uRes.value.set(W, H)

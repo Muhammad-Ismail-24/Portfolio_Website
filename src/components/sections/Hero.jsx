@@ -6,7 +6,11 @@
  * - "Explore Work" CTA button with thick border and hover inversion
  * - Tagline absolutely anchored to bottom-right
  */
+import { useSmoothScroll } from '../../hooks/useSmoothScroll'
+
 export default function Hero() {
+  const scrollToSection = useSmoothScroll()
+
   return (
     <section className="relative w-full h-screen flex flex-col justify-center px-6 md:px-16 lg:px-24">
       {/* Massive Typography - Flush Left */}
@@ -20,7 +24,7 @@ export default function Hero() {
 
         {/* Explore Work Button */}
         <div className="mt-12">
-          <button className="px-7 py-3 rounded-md border-2 border-[#0A0A0A] dark:border-white text-[#0A0A0A] dark:text-white text-sm font-semibold tracking-wide flex items-center gap-2 hover:bg-[#0A0A0A] hover:text-[#F5F3EC] transition-all duration-300">
+          <button onClick={(e) => scrollToSection(e, 'portfolio')} className="px-7 py-3 rounded-md border-2 border-[#0A0A0A] dark:border-white text-[#0A0A0A] dark:text-white text-sm font-semibold tracking-wide flex items-center gap-2 hover:bg-[#0A0A0A] hover:text-[#F5F3EC] transition-all duration-300">
             Explore Work <span className="text-lg leading-none">&rarr;</span>
           </button>
         </div>

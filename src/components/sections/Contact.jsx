@@ -32,7 +32,7 @@ const contactLinks = [
 
 const Contact = () => {
   return (
-    <section className="relative w-full h-screen flex flex-col justify-center pt-16 pb-8 px-6 md:px-16 lg:px-24 z-10 overflow-hidden">
+    <section id="contact" className="relative w-full h-screen flex flex-col justify-center pt-16 pb-8 px-6 md:px-16 lg:px-24 z-10 overflow-hidden">
       {/* Heading */}
       <div className="flex flex-row flex-wrap items-center gap-x-4 mb-10 lg:mb-14">
         <span className="text-[10vw] lg:text-[7vw] font-black tracking-tighter text-[#0A0A0A] dark:text-white leading-none">Get in</span>

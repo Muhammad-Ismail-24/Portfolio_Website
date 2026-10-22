@@ -24,7 +24,7 @@ const Services = () => {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <section className="relative w-full min-h-screen flex flex-col items-center justify-center pt-24 pb-16 px-6 md:px-16 lg:px-24 z-10">
+    <section id="services" className="relative w-full min-h-screen flex flex-col items-center justify-center pt-24 pb-16 px-6 md:px-16 lg:px-24 z-10">
 
       {/* Heading */}
       <div className="flex flex-row flex-wrap justify-center gap-x-4 mb-16">

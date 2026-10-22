@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
+import { useSmoothScroll } from '../../hooks/useSmoothScroll';
 
 export default function About() {
+  const scrollToSection = useSmoothScroll();
+
   return (
-    <section className="relative z-10 w-full h-screen flex items-center px-6 md:px-16 lg:px-24 py-20">
+    <section id="about" className="relative z-10 w-full h-screen flex items-center px-6 md:px-16 lg:px-24 py-20">
       <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
         
         {/* Left Column: Typography & Buttons */}
@@ -19,10 +22,10 @@ export default function About() {
           </p>
 
           <div className="flex flex-wrap gap-4 mt-10">
-            <button className="px-8 py-3 rounded-none bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] font-semibold tracking-wide border-2 border-[#0A0A0A] dark:border-white hover:opacity-80 transition-opacity">
+            <button onClick={(e) => scrollToSection(e, 'portfolio')} className="px-8 py-3 rounded-none bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] font-semibold tracking-wide border-2 border-[#0A0A0A] dark:border-white hover:opacity-80 transition-opacity">
               View My Work &rarr;
             </button>
-            <button className="px-8 py-3 rounded-none bg-transparent text-[#0A0A0A] dark:text-white font-semibold tracking-wide border-2 border-[#0A0A0A] dark:border-white hover:bg-[#0A0A0A] hover:text-white dark:hover:bg-white dark:hover:text-[#0A0A0A] transition-colors">
+            <button onClick={(e) => scrollToSection(e, 'contact')} className="px-8 py-3 rounded-none bg-transparent text-[#0A0A0A] dark:text-white font-semibold tracking-wide border-2 border-[#0A0A0A] dark:border-white hover:bg-[#0A0A0A] hover:text-white dark:hover:bg-white dark:hover:text-[#0A0A0A] transition-colors">
               Let's Connect
             </button>
           </div>
