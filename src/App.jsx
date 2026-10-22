@@ -12,7 +12,7 @@ import Contact from './components/sections/Contact';
 
 export default function App() {
   return (
-    <ReactLenis root options={{ lerp: 0.1, smoothWheel: true, wheelMultiplier: 1.2 }}>
+    <ReactLenis root options={{ lerp: 0.15, smoothWheel: true, wheelMultiplier: 1.2 }}>
       <Layout>
         <StaticNeuromesh/>
         <Navbar/>

@@ -20,7 +20,7 @@ import * as THREE from 'three'
      • No rigid rotation. Every node circles on its own small orbit, so each
        strand swings and rotates by itself.
      • Orbit phases form a wave along the diagonal; scrolling pushes it forward
-       through the mesh (top-right → bottom-left), scrolling up reverses it.
+       through the mesh (bottom-left → top-right), scrolling up reverses it.
      • At scroll 0 every node sits exactly on its original position.
    ════════════════════════════════════════════════════════════════════════════ */
 
@@ -456,8 +456,9 @@ function NeuromeshScene() {
     scene.nodeMat.uniforms.uScale.value = pxPerUnit
     scene.nodeMat.uniforms.uPxRatio.value = state.gl.getPixelRatio()
 
-    // Scroll distance → orbit angle (shared by all nodes; phases differ per node)
-    scene.update((current.current / PX_PER_TURN) * Math.PI * 2)
+    // Scroll distance → orbit angle (shared by all nodes; phases differ per node).
+    // Negated so scrolling down drives the motion forward clockwise.
+    scene.update(-(current.current / PX_PER_TURN) * Math.PI * 2)
   })
 
   return (
