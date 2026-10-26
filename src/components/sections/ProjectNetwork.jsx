@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, animate, motion, useMotionValue } from 'framer-motion'
+import { createPortal } from 'react-dom'
+import { AnimatePresence, animate, motion, useDragControls, useMotionValue } from 'framer-motion'
 import { projects } from '../../data/projects'
 import { EVENTS, on, prefersReducedMotion, scrollToId } from '../../utils/bus'
 import SplitHeading from '../ui/SplitHeading'
@@ -117,6 +118,7 @@ function buildGraph(w, h) {
 
 // Where the selected hub lands, how far we zoom, and where the card sits
 function cameraFor(graph, w, h) {
+  if (graph.tall && w < SHEET_BELOW) return { tx: w * 0.5, ty: h * 0.15, s: 1.2 } // stays visible above the sheet
   if (graph.tall) return { tx: w * 0.5, ty: h * 0.2, s: 1.3 }
   return { tx: w * 0.22, ty: h * 0.5, s: 1.35 }
 }
@@ -127,6 +129,9 @@ function cardBox(graph, w, h) {
 }
 
 const pad2 = (n) => String(n + 1).padStart(2, '0')
+
+// stages narrower than this (phones) open projects in a bottom sheet
+const SHEET_BELOW = 600
 
 export default function ProjectNetwork() {
   const sectionRef = useRef(null)
@@ -310,11 +315,13 @@ export default function ProjectNetwork() {
     setExplored(true)
     setSelected(i)
     // bring the whole stage into view so the card isn't below the fold
+    // (phones: pin the stage's top under the nav, so the node shows above the sheet)
     const stage = stageRef.current
     if (stage) {
       const r = stage.getBoundingClientRect()
-      if (r.top < 0 || r.bottom > window.innerHeight) {
-        const y = window.scrollY + r.top - Math.max(16, (window.innerHeight - r.height) / 2)
+      const phone = stage.clientWidth < SHEET_BELOW
+      if (phone || r.top < 0 || r.bottom > window.innerHeight) {
+        const y = window.scrollY + r.top - (phone ? 76 : Math.max(16, (window.innerHeight - r.height) / 2))
         if (window.__lenis) window.__lenis.scrollTo(y, { duration: 0.9 })
         else window.scrollTo({ top: y, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
       }
@@ -351,9 +358,11 @@ export default function ProjectNetwork() {
   const active = selected ?? hovered
   const isLit = (edge) => active !== null && edge.hubs.includes(active)
 
+  // phones: the card is a bottom sheet over the page, so there's no wire to draw
+  const sheet = size.w > 0 && size.w < SHEET_BELOW
   const card = graph && selected !== null ? cardBox(graph, size.w, size.h) : null
   const cam = graph && selected !== null ? cameraFor(graph, size.w, size.h) : null
-  const wireEnd = card
+  const wireEnd = card && !sheet
     ? graph.tall
       ? { x: size.w / 2, y: card.top }
       : { x: card.left, y: size.h / 2 }
@@ -399,7 +408,7 @@ export default function ProjectNetwork() {
         <>
           <p className="mt-6 font-mono text-xs md:text-sm text-muted flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="inline-flex items-center gap-2">
-              <span className="pn-live-dot" aria-hidden="true" /> Click a node to open a project
+              <span className="pn-live-dot" aria-hidden="true" /> <span className="md:hidden">Tap</span><span className="hidden md:inline">Click</span> a node to open a project
             </span>
             <span className="hidden md:inline">· ← → hop between nodes · Esc to close</span>
           </p>
@@ -407,7 +416,7 @@ export default function ProjectNetwork() {
           {/* ── Stage ─────────────────────────── */}
           <div
             ref={stageRef}
-            className={`pn-stage relative mt-4 w-full h-[780px] md:h-[72vh] md:min-h-[580px] md:max-h-[780px] overflow-hidden border-2 border-ink rounded-xl bg-[#F4EFE6]/70 dark:bg-[#080A17]/70 backdrop-blur-[2px] ${booted ? 'is-booted' : ''} ${active !== null ? 'has-active' : ''} ${selected !== null ? 'has-selected' : ''} ${size.w < 1100 ? 'is-compact' : ''}`}
+            className={`pn-stage relative mt-4 w-full h-[min(780px,max(520px,calc(100svh_-_120px)))] md:h-[72vh] md:min-h-[580px] md:max-h-[780px] overflow-hidden border-2 border-ink rounded-xl bg-[#F4EFE6]/70 dark:bg-[#080A17]/70 backdrop-blur-[2px] ${booted ? 'is-booted' : ''} ${active !== null ? 'has-active' : ''} ${selected !== null ? 'has-selected' : ''} ${size.w < 1100 ? 'is-compact' : ''}`}
             onPointerMove={(e) => {
               const r = stageRef.current.getBoundingClientRect()
               pointer.current = { x: e.clientX - r.left, y: e.clientY - r.top }
@@ -543,6 +552,7 @@ export default function ProjectNetwork() {
                   index={selected}
                   box={card}
                   tall={graph.tall}
+                  sheet={sheet}
                   reduced={reduced}
                   onClose={close}
                   onPrev={() => setSelected((s) => (s - 1 + projects.length) % projects.length)}
@@ -571,11 +581,12 @@ function HubGlyph({ index, active, selected }) {
 }
 
 /* ── Card ────────────────────────────────── */
-function ProjectCard({ index, box, tall, reduced, onClose, onPrev, onNext }) {
+function ProjectCard({ index, box, tall, sheet, reduced, onClose, onPrev, onNext }) {
   const p = projects[index]
   const headRef = useRef(null)
   const [imgOk, setImgOk] = useState(true)
   const origin = tall ? '50% 0%' : '0% 50%'
+  const drag = useDragControls()
 
   useEffect(() => {
     const t = setTimeout(() => headRef.current?.focus({ preventScroll: true }), reduced ? 0 : 380)
@@ -586,26 +597,14 @@ function ProjectCard({ index, box, tall, reduced, onClose, onPrev, onNext }) {
   const solid = words.length > 1 ? words.slice(0, -1).join(' ') : p.title
   const hollow = words.length > 1 ? words[words.length - 1] : null
 
-  return (
-    <motion.article
-      className="pn-card absolute z-20 flex flex-col overflow-y-auto overscroll-contain bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-ink rounded-xl shadow-[8px_8px_0_0_var(--color-ink)] dark:shadow-[8px_8px_0_0_rgba(255,255,255,0.18)]"
-      style={{
-        left: box.left,
-        width: box.width,
-        ...(tall ? { top: box.top, bottom: 16 } : { top: '50%', y: '-50%', maxHeight: 'calc(100% - 48px)' }),
-      }}
-      role="dialog"
-      aria-modal="false"
-      aria-labelledby={`pn-title-${p.id}`}
-      data-lenis-prevent
-      initial={reduced ? { opacity: 0 } : { clipPath: `circle(0% at ${origin})`, opacity: 1 }}
-      animate={reduced ? { opacity: 1 } : { clipPath: `circle(150% at ${origin})`, opacity: 1 }}
-      exit={reduced ? { opacity: 0 } : { clipPath: `circle(0% at ${origin})`, transition: { duration: 0.28, ease: 'easeIn' } }}
-      transition={{ duration: reduced ? 0 : 0.65, delay: reduced ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* top bar */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b-2 border-ink">
+  const body = (
+    <>
+      {/* top bar (phones: also the drag handle — swipe down to close) */}
+      <div
+        className={`flex items-center justify-between px-5 pt-4 pb-3 border-b-2 border-ink ${sheet ? 'relative pt-6 touch-none cursor-grab' : ''}`}
+        onPointerDown={sheet ? (e) => { if (!e.target.closest('button')) drag.start(e) } : undefined}
+      >
+        {sheet && <span aria-hidden="true" className="absolute left-1/2 top-2 -translate-x-1/2 h-1 w-10 rounded-full bg-ink/30" />}
         <span className="font-mono text-xs tracking-[0.2em] uppercase text-muted">
           Node {pad2(index)} / {pad2(projects.length - 1)}
         </span>
@@ -619,7 +618,7 @@ function ProjectCard({ index, box, tall, reduced, onClose, onPrev, onNext }) {
         </button>
       </div>
 
-      <div className="p-5 flex flex-col gap-3.5">
+      <div className={`p-5 flex flex-col gap-3.5 ${sheet ? 'pb-[max(20px,env(safe-area-inset-bottom))]' : ''}`}>
         {/* preview */}
         <div className="pn-preview relative w-full aspect-[16/7] max-h-[22vh] rounded-lg overflow-hidden border border-ink/20">
           {imgOk && (
@@ -651,11 +650,11 @@ function ProjectCard({ index, box, tall, reduced, onClose, onPrev, onNext }) {
           ))}
         </ul>
 
-        <div className="flex flex-wrap gap-3 pt-1">
-          <a href={p.demo} className="inline-flex items-center gap-2 px-5 min-h-[44px] bg-ink text-canvas border-2 border-ink font-semibold text-sm hover:opacity-80 transition-opacity">
+        <div className={`gap-3 pt-1 ${sheet ? 'grid grid-cols-2' : 'flex flex-wrap'}`}>
+          <a href={p.demo} className="inline-flex items-center justify-center gap-2 px-5 min-h-[48px] bg-ink text-canvas border-2 border-ink font-semibold text-sm hover:opacity-80 transition-opacity">
             Video Demo <span aria-hidden="true">→</span>
           </a>
-          <a href={p.source} className="inline-flex items-center gap-2 px-5 min-h-[44px] border-2 border-ink text-ink font-semibold text-sm hover:bg-ink hover:text-canvas transition-colors">
+          <a href={p.source} className="inline-flex items-center justify-center gap-2 px-5 min-h-[48px] border-2 border-ink text-ink font-semibold text-sm hover:bg-ink hover:text-canvas transition-colors">
             Source
           </a>
         </div>
@@ -670,6 +669,67 @@ function ProjectCard({ index, box, tall, reduced, onClose, onPrev, onNext }) {
           </button>
         </div>
       </div>
+    </>
+  )
+
+  // phones: a bottom sheet over the page (portalled, so the stage's backdrop-filter
+  // doesn't trap position: fixed); a scrim behind it closes it on tap
+  if (sheet) {
+    return createPortal(
+      <>
+        <motion.div
+          className="fixed inset-0 z-[78] bg-[rgb(var(--ink-rgb)/0.12)] touch-none"
+          aria-hidden="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reduced ? 0 : 0.2 }}
+          onClick={onClose}
+        />
+        <motion.article
+          className="pn-card fixed inset-x-0 bottom-0 z-[80] flex flex-col max-h-[68svh] overflow-y-auto overscroll-contain bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-b-0 border-ink rounded-t-2xl"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby={`pn-title-${p.id}`}
+          data-lenis-prevent
+          drag={reduced ? false : 'y'}
+          dragControls={drag}
+          dragListener={false}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0, bottom: 0.6 }}
+          onDragEnd={(_, info) => { if (info.offset.y > 90 || info.velocity.y > 500) onClose() }}
+          initial={reduced ? { opacity: 0 } : { y: '100%' }}
+          animate={reduced ? { opacity: 1 } : { y: 0 }}
+          exit={reduced ? { opacity: 0 } : { y: '100%', transition: { duration: 0.22, ease: 'easeIn' } }}
+          transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 320, damping: 34, delay: 0.15 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {body}
+        </motion.article>
+      </>,
+      document.body,
+    )
+  }
+
+  return (
+    <motion.article
+      className="pn-card absolute z-20 flex flex-col overflow-y-auto overscroll-contain bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-ink rounded-xl shadow-[8px_8px_0_0_var(--color-ink)] dark:shadow-[8px_8px_0_0_rgba(255,255,255,0.18)]"
+      style={{
+        left: box.left,
+        width: box.width,
+        ...(tall ? { top: box.top, bottom: 16 } : { top: '50%', y: '-50%', maxHeight: 'calc(100% - 48px)' }),
+      }}
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby={`pn-title-${p.id}`}
+      data-lenis-prevent
+      initial={reduced ? { opacity: 0 } : { clipPath: `circle(0% at ${origin})`, opacity: 1 }}
+      animate={reduced ? { opacity: 1 } : { clipPath: `circle(150% at ${origin})`, opacity: 1 }}
+      exit={reduced ? { opacity: 0 } : { clipPath: `circle(0% at ${origin})`, transition: { duration: 0.28, ease: 'easeIn' } }}
+      transition={{ duration: reduced ? 0 : 0.65, delay: reduced ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {body}
     </motion.article>
   )
 }

@@ -22,6 +22,8 @@ apply(isDarkState)
 function apply(dark) {
   if (typeof document === 'undefined') return
   document.documentElement.classList.toggle('dark', dark)
+  // the phone browser's address bar follows the site theme
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', dark ? '#0A0F1E' : '#F4EFE6'))
   try { localStorage.setItem('theme', dark ? 'dark' : 'light') } catch { /* storage blocked */ }
 }
 

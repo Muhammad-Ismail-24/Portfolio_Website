@@ -84,7 +84,7 @@ export default function Phone({ scale: s, reduced, booted }) {
                   </li>
                 ))}
               </ul>
-              <p aria-hidden="true" className="os-hint absolute left-0 right-0 font-mono text-[11px] tracking-[0.2em] uppercase text-muted text-center" style={{ bottom: HOME_H + 48 }}>tap an app to open it</p>
+              <p aria-hidden="true" className="os-hint absolute left-0 right-0 font-mono text-[13px] tracking-[0.2em] uppercase text-muted text-center" style={{ bottom: HOME_H + 48 }}>tap an app to open it</p>
             </div>
 
             {/* an app, full screen */}

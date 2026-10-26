@@ -58,6 +58,9 @@ const ARG_ALIASES = { andhera: 'dark', roshan: 'light' }
 
 const MAX_LINES = 3000
 
+// one-tap commands shown on touch screens
+const CHIPS = ['help', 'whoami', 'ls projects', 'stack', 'services', 'contact', 'onyx']
+
 const line = (text, tone = 'out') => ({ text, tone, id: Math.random().toString(36).slice(2) })
 const partsLine = (parts) => ({ parts, id: Math.random().toString(36).slice(2) })
 
@@ -223,9 +226,11 @@ export default function Terminal() {
   const [history, setHistory] = useState([])
   const [cursor, setCursor] = useState(-1)
   const [prompt, setPrompt] = useState('$')
+  const [viewH, setViewH] = useState(0) // visible height (shrinks when a phone keyboard opens)
   const inputRef = useRef(null)
   const scrollRef = useRef(null)
   const returnFocus = useRef(null)
+  const touch = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches
   const sessionRef = useRef(null) // the running ONYX session, if any
   const reduced = prefersReducedMotion()
 
@@ -313,10 +318,21 @@ export default function Terminal() {
   useEffect(() => {
     if (open) {
       lockScroll('terminal')
-      setTimeout(() => inputRef.current?.focus(), 30)
+      // touch screens: don't throw the keyboard up on open — the chips work without it
+      if (!touch) setTimeout(() => inputRef.current?.focus(), 30)
     } else {
       unlockScroll('terminal')
     }
+  }, [open, touch])
+
+  // follow the visible viewport so the input stays above a phone keyboard
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!open || !vv) return undefined
+    const update = () => setViewH(vv.height)
+    update()
+    vv.addEventListener('resize', update)
+    return () => vv.removeEventListener('resize', update)
   }, [open])
 
   useEffect(() => {
@@ -325,8 +341,10 @@ export default function Terminal() {
 
   const submit = (e) => {
     e.preventDefault()
-    const input = value
+    exec(value)
+  }
 
+  const exec = (input) => {
     // inside ONYX the line belongs to the machine (menu choice, editor line or keyboard input)
     if (sessionRef.current) {
       push([line(`${prompt} ${input}`, 'cmd')])
@@ -380,7 +398,7 @@ export default function Terminal() {
       {open && (
         <motion.div
           key="terminal"
-          className="fixed inset-0 z-[10000] flex items-end md:items-center justify-center p-3 md:p-8 bg-[#F5F3EC]/50 dark:bg-[#0A0F1E]/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[10000] flex items-start md:items-center justify-center p-3 pt-[max(12px,env(safe-area-inset-top))] md:p-8 bg-[#F5F3EC]/50 dark:bg-[#0A0F1E]/60 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -391,19 +409,21 @@ export default function Terminal() {
             role="dialog"
             aria-modal="true"
             aria-label="Terminal"
-            className="w-full max-w-[760px] h-[min(460px,70vh)] flex flex-col bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-ink rounded-xl shadow-[10px_10px_0_0_var(--color-ink)] dark:shadow-[10px_10px_0_0_rgba(255,255,255,0.18)] overflow-hidden font-mono"
+            className="w-full max-w-[760px] h-[min(460px,70vh)] flex flex-col bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-ink rounded-xl shadow-[6px_6px_0_0_var(--color-ink)] md:shadow-[10px_10px_0_0_var(--color-ink)] dark:shadow-[6px_6px_0_0_rgba(255,255,255,0.18)] md:dark:shadow-[10px_10px_0_0_rgba(255,255,255,0.18)] overflow-hidden font-mono"
+            // phones: never taller than what's visible above the keyboard
+            style={touch && viewH ? { height: Math.max(220, Math.min(460, viewH - 30)) } : undefined}
             initial={reduced ? false : { y: 24, scale: 0.98 }}
             animate={{ y: 0, scale: 1 }}
             exit={reduced ? undefined : { y: 16, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-            onClick={() => inputRef.current?.focus()}
+            onClick={() => { if (!touch) inputRef.current?.focus() }}
           >
             <div className="flex items-center justify-between px-4 py-2.5 border-b-2 border-ink bg-ink text-canvas">
               <span className="text-xs tracking-[0.18em] uppercase">{inOnyx ? 'onyx-16 · lazarus machinae' : 'ismail@portfolio: ~'}</span>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); close() }}
-                className="text-xs tracking-[0.18em] uppercase px-2 min-h-[32px] hover:opacity-70"
+                className="text-xs tracking-[0.18em] uppercase px-2 -mr-2 min-h-[44px] md:min-h-[32px] hover:opacity-70"
                 aria-label="Close terminal"
               >
                 esc ✕
@@ -422,6 +442,22 @@ export default function Terminal() {
               )))}
             </div>
 
+            {/* touch screens: one-tap commands, so nobody has to type on a phone keyboard */}
+            {touch && !inOnyx && (
+              <div className="flex gap-2 px-3 py-2 overflow-x-auto no-scrollbar border-t-2 border-ink" data-lenis-prevent>
+                {CHIPS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); exec(c) }}
+                    className="shrink-0 h-9 px-3 border-2 border-ink rounded-full text-[13px] font-semibold text-ink active:bg-ink active:text-canvas"
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <form onSubmit={submit} className="flex items-center gap-2 px-4 py-3 border-t-2 border-ink">
               <label htmlFor="term-input" className="text-ink font-semibold shrink-0 whitespace-pre" aria-label="Command">{prompt}</label>
               <input
@@ -432,8 +468,11 @@ export default function Terminal() {
                 onKeyDown={onInputKey}
                 autoComplete="off"
                 autoCapitalize="off"
+                autoCorrect="off"
                 spellCheck={false}
-                className="flex-1 min-w-0 bg-transparent outline-none text-ink text-sm caret-ink placeholder:text-muted"
+                enterKeyHint="go"
+                // 16px on phones so iOS doesn't zoom the page when the input is focused
+                className="flex-1 min-w-0 bg-transparent outline-none text-ink text-base md:text-sm caret-ink placeholder:text-muted"
                 placeholder={inOnyx ? 'help · madad · exit · bahar' : 'type help (madad)'}
               />
               <span className="hidden md:inline text-[11px] text-muted">{inOnyx ? 'ctrl+c aborts' : 'tab ↹ · ↑↓'}</span>
