@@ -256,8 +256,9 @@ function OsWindow({ win, area, compact, reduced, active, onFocus, onClose, onPat
   const onPointerMove = (e) => {
     const d = drag.current
     if (!d) return
-    const x = Math.max(-win.w + 120, Math.min(area.w - 120, d.x + e.clientX - d.sx))
-    const y = Math.max(0, Math.min(area.h - 44, d.y + e.clientY - d.sy))
+    // stay fully inside the desktop (same rule as the resize clamp above)
+    const x = Math.max(0, Math.min(area.w - win.w, d.x + e.clientX - d.sx))
+    const y = Math.max(0, Math.min(area.h - win.h, d.y + e.clientY - d.sy))
     onPatch({ x, y })
   }
   const endDrag = () => { drag.current = null }
@@ -282,6 +283,7 @@ function OsWindow({ win, area, compact, reduced, active, onFocus, onClose, onPat
       onPointerDownCapture={onFocus}
       onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose() } }}
       aria-hidden={win.min}
+      inert={win.min ? '' : undefined}
     >
       {/* tab strip = title bar (drag handle) */}
       <div

@@ -231,7 +231,8 @@ function LiveGitHub() {
       // no contribution API? approximate the grid from public events
       if (!data.days && events.status === 'fulfilled') data.days = daysFromEvents(events.value)
       const ok = data.days || data.repos.length || data.events.length
-      if (ok) cache.set('gh-live', data)
+      // only cache a complete result, so one failed request doesn't stick for 15 minutes
+      if (ok && [contrib, repos, events].every((r) => r.status === 'fulfilled')) cache.set('gh-live', data)
       setState(ok ? { status: 'ok', ...data } : { status: 'error' })
     }, { rootMargin: '200px' })
     io.observe(el)
@@ -252,7 +253,7 @@ function LiveGitHub() {
 
       <div className="p-4 md:p-5">
         {/* contribution grid (hidden if GitHub can't be reached, so it never reads as "no activity") */}
-        <div ref={gridRef} className={`w-full ${state.status === 'error' ? 'hidden' : ''}`}>
+        <div ref={gridRef} className={`w-full ${state.status === 'error' || (state.status === 'ok' && !state.days) ? 'hidden' : ''}`}>
           <div className="flex gap-[3px]" role="img" aria-label={state.total != null ? `${state.total} contributions in the last year` : 'GitHub contribution grid'}>
             {grid.map((week, wi) => (
               <div key={wi} className="flex flex-col gap-[3px]">
