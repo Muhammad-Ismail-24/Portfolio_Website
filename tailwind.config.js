@@ -11,9 +11,10 @@ export default {
         sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
       },
       colors: {
-        canvas: 'var(--color-canvas)',
-        ink: 'var(--color-ink)',
-        muted: 'var(--color-muted)',
+        // rgb channels so opacity modifiers (text-ink/80, bg-ink/[0.06]) work
+        canvas: 'rgb(var(--canvas-rgb) / <alpha-value>)',
+        ink: 'rgb(var(--ink-rgb) / <alpha-value>)',
+        muted: 'rgb(var(--muted-rgb) / <alpha-value>)',
         accent: 'var(--color-accent)',
         'nav-bg': 'var(--color-nav-bg)',
         'nav-border': 'var(--color-nav-border)',

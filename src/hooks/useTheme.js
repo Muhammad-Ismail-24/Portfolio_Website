@@ -1,30 +1,45 @@
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 
 /**
- * Custom hook for managing light/dark theme.
- * Persists preference to localStorage and applies the `dark` class to <html>.
+ * Light/dark theme as one shared store, so the navbar toggle, the hidden
+ * terminal (`theme dark`) and anything else stay in sync.
+ * Persists to localStorage and applies the `dark` class to <html>.
  */
-export function useTheme() {
-  const [isDark, setIsDark] = useState(() => {
-    // Check localStorage first, then system preference
-    if (typeof window === 'undefined') return false
+const listeners = new Set()
+
+function readInitial() {
+  if (typeof window === 'undefined') return false
+  try {
     const stored = localStorage.getItem('theme')
     if (stored) return stored === 'dark'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
+  } catch { /* storage blocked */ }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
 
-  useEffect(() => {
-    const root = document.documentElement
-    if (isDark) {
-      root.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      root.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    }
-  }, [isDark])
+let isDarkState = readInitial()
+apply(isDarkState)
 
-  const toggleTheme = () => setIsDark(prev => !prev)
+function apply(dark) {
+  if (typeof document === 'undefined') return
+  document.documentElement.classList.toggle('dark', dark)
+  try { localStorage.setItem('theme', dark ? 'dark' : 'light') } catch { /* storage blocked */ }
+}
 
-  return { isDark, toggleTheme }
+export function setTheme(dark) {
+  if (dark === isDarkState) return
+  isDarkState = dark
+  apply(dark)
+  listeners.forEach((l) => l())
+}
+
+export const getIsDark = () => isDarkState
+
+function subscribe(l) {
+  listeners.add(l)
+  return () => listeners.delete(l)
+}
+
+export function useTheme() {
+  const isDark = useSyncExternalStore(subscribe, getIsDark, () => false)
+  return { isDark, toggleTheme: () => setTheme(!isDarkState), setTheme }
 }
