@@ -289,14 +289,53 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
 .os-loadbar { width: 100%; transform-origin: 0 50%; animation: os-load 0.65s cubic-bezier(0.3, 0.7, 0.2, 1) forwards; }
 @keyframes os-load { 0% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
 
-/* ── Contact: the email as the hero ──────────────────────────── */
-/* Scales with the viewport (6.5vw) but never wider than its container:
-   --n is the longest line's character count. */
-.ct-email-text { --cap: 6.5vw; font-size: min(var(--cap), calc(100cqw / (var(--n, 20) * 0.6))); overflow-wrap: anywhere; }
-@media (max-width: 767px) { .ct-email-text { --cap: 14vw; } }  /* phones: as large as the line allows */
-.ct-hollow { color: transparent; -webkit-text-stroke: max(1px, 0.021em) var(--color-ink); transition: color 0.25s ease; }
-.dark .ct-hollow { -webkit-text-stroke-width: max(1px, 0.016em); }
-.ct-email:hover .ct-hollow, .ct-email:focus-visible .ct-hollow { color: var(--color-ink); }
+/* ── Contact ─────────────────────────────────────────────────── */
+/* underline slides in from the left on hover / focus */
+.ct-ulink {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat; background-position: 0 100%; background-size: 0% 2px;
+  transition: background-size 0.3s ease;
+}
+.ct-ulink:hover, .ct-ulink:focus-visible { background-size: 100% 2px; }
+/* the signature: outlined type, filled with ink left → right by scroll */
+.ct-sig { color: transparent; -webkit-text-stroke: 2px var(--color-ink); white-space: nowrap; line-height: 0.9; }
+.dark .ct-sig { -webkit-text-stroke-width: 1.5px; }
+.ct-sig-fill { position: absolute; left: 0; top: 0; color: var(--color-ink); -webkit-text-stroke: 0; white-space: nowrap; line-height: 0.9; pointer-events: none; user-select: none; }
+
+/* ── What I offer ────────────────────────────────────────────── */
+/* four columns split by 2px ink rules: stacked on phones, 2×2 on tablet, 4-up from 1280 */
+.svc-col { border-top: 2px solid var(--color-ink); padding: 2.5rem 0; display: flex; flex-direction: column; }
+.svc-col:first-child { border-top: 0; padding-top: 0; }
+@media (min-width: 768px) {
+  .svc-col { border-top: 0; padding: 0 1.75rem 1rem 0; }
+  .svc-col:nth-child(even) { border-left: 2px solid var(--color-ink); padding-left: 1.75rem; padding-right: 0; }
+  .svc-col:nth-child(n+3) { border-top: 2px solid var(--color-ink); padding-top: 2.5rem; margin-top: 2.5rem; }
+}
+@media (min-width: 1280px) {
+  .svc-col, .svc-col:nth-child(even), .svc-col:nth-child(n+3) { border-top: 0; margin-top: 0; padding: 0 1.5rem 0.5rem; }
+  .svc-col + .svc-col { border-left: 2px solid var(--color-ink); }
+  .svc-col:first-child { padding-left: 0; }
+  .svc-col:last-child { padding-right: 0; }
+}
+
+/* the line-art: static by default, gently animated while the column is hovered or focused */
+.svc-art { overflow: visible; }
+.svc-art .st { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.svc-art .fl { fill: currentColor; stroke: none; }
+.svc-node { fill: var(--card-bg); stroke: currentColor; stroke-width: 2; }
+.svc-block { fill: currentColor; fill-opacity: 0; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; transform-box: fill-box; }
+.svc-col:hover .svc-node, .svc-col:focus-within .svc-node { animation: svc-light 3s ease-in-out infinite; animation-delay: calc(var(--i) * 0.5s); }
+.svc-col:hover .svc-block, .svc-col:focus-within .svc-block { animation: svc-fill 0.6s ease forwards; animation-delay: calc(var(--i) * 0.18s); }
+.svc-col:hover .svc-packet, .svc-col:focus-within .svc-packet { animation: svc-packet 2.2s ease-in-out infinite; }
+.svc-col:hover .svc-slide, .svc-col:focus-within .svc-slide { animation: svc-slide 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: calc(var(--i) * 0.12s); }
+@keyframes svc-light { 0%, 38%, 100% { fill: var(--card-bg); } 8%, 28% { fill: var(--color-ink); } }
+@keyframes svc-fill { from { fill-opacity: 0; } to { fill-opacity: 1; } }
+@keyframes svc-packet { 0% { transform: translateX(0); } 100% { transform: translateX(96px); } }
+@keyframes svc-slide { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+.svc-sq { display: inline-block; width: 6px; height: 6px; background: var(--color-ink); flex-shrink: 0; margin-top: 0.5em; }
+
+/* "How I work": a line that draws in with scroll, nodes sitting on it */
+.hw-node { width: 16px; height: 16px; border: 2px solid var(--color-ink); background: var(--card-bg); }
 
 /* ── ONYX-16: the phosphor display inside the terminal ───────── */
 .onyx-crt {
@@ -321,8 +360,8 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
 /* ── Reduced motion: keep the content, drop the movement ────── */
 @media (prefers-reduced-motion: reduce) {
   .pn-core, .pn-orbit, .pn-pulse, .pn-callout, .pn-live-dot,
-  .os-hint, .os-loadbar { animation: none !important; }
-  .os-icon-li, .ct-hollow { transition: none !important; }
+  .os-hint, .os-loadbar, .svc-art * { animation: none !important; }
+  .os-icon-li, .ct-ulink { transition: none !important; }
   .pn-pulse { display: none; }
   .pn-edge, .pn-node, .pn-hubglyph, .pn-label, .pn-packet, .pn-callout, .spotlight-name { transition: none !important; }
   .pn-callout { transform: translate(-50%, 0); }

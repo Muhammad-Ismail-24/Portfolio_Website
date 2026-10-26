@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion'
 import { products } from '../../../data/products'
-import { EVENTS, emit, on, scrollToId } from '../../../utils/bus'
+import { EVENTS, emit, lockScroll, on, scrollToId, unlockScroll } from '../../../utils/bus'
 import {
   AddressText, appTitle, Glyph, LockIcon, NotePage, ProductPage, README, ReloadPath, ToolButton, useClock, useLoading, Wordmark,
 } from './parts'
@@ -9,20 +9,23 @@ import {
 /* ════════════════════════════════════════════════════════════════════════════
    Monitor — portfolio-os on a desktop screen.
 
-   The OS always lays out at a fixed 1280×800 "virtual resolution" and is scaled
-   to the monitor with transform: scale(s). All window maths (open position,
-   size, dragging, clamping) is done in that 1280×800 space; pointer deltas are
-   divided by s while dragging.
+   The OS lays out at a "virtual resolution" of 1024×640 (16:10) and is scaled
+   to the monitor with transform: scale(s). The monitor is sized by width
+   (min(1200px, the section's content width)), so s lands near 1 and the UI
+   renders at about 1:1. All window maths (open position, size, dragging,
+   clamping) is done in OS pixels; pointer deltas are divided by the live scale.
+
+   Full screen: the same DOM turns into a fixed overlay, so open windows keep
+   their state. The OS is re-scaled to fit the viewport and its virtual size
+   grows to the viewport's aspect ratio, so there are no letterbox bars.
    ════════════════════════════════════════════════════════════════════════════ */
 
-export const OS_W = 1280
-export const OS_H = 800
+export const OS_W = 1024
+export const OS_H = 640
 const BAR_H = 32               // menu bar
 const TASK_H = 44              // taskbar
-const AREA_W = OS_W
-const AREA_H = OS_H - BAR_H - TASK_H
-const ICON_H = 100
-const ICON_ROWS = Math.floor((AREA_H - 32) / (ICON_H + 8))
+const ICON_H = 92
+const FULL_PAD = 6             // ink frame in full screen: 2px border + this padding
 
 /** Monitor dimensions for a given outer width (all in CSS px; the bezel scales with the monitor). */
 export function monitorMetrics(width) {
@@ -30,50 +33,109 @@ export function monitorMetrics(width) {
   const bez = Math.max(5, 14 * k)
   const chin = 30 * k
   const screenW = width - 2 * bez
-  const screenH = screenW / 1.6
+  const screenH = screenW / (OS_W / OS_H)
   const neckH = 40 * k
   const baseH = 14 * k
   return { k, bez, chin, screenW, screenH, neckH, baseH, s: screenW / OS_W, bodyH: bez + screenH + chin, totalH: bez + screenH + chin + neckH + baseH }
 }
 
-export default function Monitor({ width, reduced, booted }) {
+export default function Monitor({ width, reduced, booted, full, onFullChange }) {
   const m = monitorMetrics(width)
+  const outerRef = useRef(null)
+  const bodyRef = useRef(null)
+  const [box, setBox] = useState({ w: 0, h: 0 })
+
+  // Scroll-in: the monitor grows 0.9 → 1 and the stand fades in as the section arrives
+  const { scrollYProgress } = useScroll({ target: outerRef, offset: ['start end', 'start 0.4'] })
+  const inScale = useTransform(scrollYProgress, [0, 1], [reduced ? 1 : 0.9, 1])
+  const standOpacity = useTransform(scrollYProgress, [0.3, 1], [reduced ? 1 : 0, 1])
+
+  // Full screen: lock page scroll, Esc exits, follow the overlay's size
+  useLayoutEffect(() => {
+    if (!full) return undefined
+    const el = bodyRef.current
+    const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [full])
+
+  useEffect(() => {
+    if (!full) return undefined
+    lockScroll('os-full')
+    // a focused window or the terminal handles its own Esc first (they stop it / preventDefault)
+    const onKey = (e) => { if (e.key === 'Escape' && !e.defaultPrevented) onFullChange(false) }
+    window.addEventListener('keydown', onKey)
+    const off = on(EVENTS.exitFullscreen, () => { unlockScroll('os-full'); onFullChange(false) })
+    return () => { window.removeEventListener('keydown', onKey); off(); unlockScroll('os-full') }
+  }, [full, onFullChange])
+
+  const fw = Math.max(1, (box.w || window.innerWidth) - 2 * FULL_PAD)
+  const fh = Math.max(1, (box.h || window.innerHeight) - 2 * FULL_PAD)
+  const fullScale = Math.min(fw / OS_W, fh / OS_H)
+
+  const scale = full ? fullScale : m.s
+  const osW = full ? fw / fullScale : OS_W
+  const osH = full ? fh / fullScale : OS_H
+
+  const bodyStyle = full
+    ? { position: 'fixed', inset: 0, zIndex: 1, padding: FULL_PAD, border: '2px solid var(--color-ink)', borderRadius: 0, scale: 1 }
+    : { width, height: m.bodyH, borderRadius: 18 * m.k, padding: `${m.bez}px ${m.bez}px 0`, scale: inScale, transformOrigin: '50% 100%' }
+
   return (
-    <div className="os-mon relative mx-auto" style={{ width, height: m.totalH + 10 * m.k }}>
+    <div ref={outerRef} className="os-mon relative mx-auto" style={{ width, height: m.totalH + 10 * m.k }}>
       {/* body */}
-      <div
-        className="os-mon-body relative"
-        style={{ width, height: m.bodyH, borderRadius: 18 * m.k, padding: `${m.bez}px ${m.bez}px 0` }}
-      >
-        <span className="absolute left-1/2 -translate-x-1/2 rounded-full bg-white/25" style={{ top: m.bez * 0.38, width: Math.max(3, 4 * m.k), height: Math.max(3, 4 * m.k) }} aria-hidden="true" />
-        <div className="os-screen" style={{ width: m.screenW, height: m.screenH, borderRadius: Math.max(3, 6 * m.k) }}>
-          <div className="os-root" style={{ width: OS_W, height: OS_H, transform: `scale(${m.s})` }}>
-            <Desktop scale={m.s} reduced={reduced} booted={booted} />
+      <motion.div ref={bodyRef} className="os-mon-body relative" style={bodyStyle} data-lenis-prevent={full ? '' : undefined}>
+        <span className="absolute left-1/2 -translate-x-1/2 rounded-full bg-white/25" style={{ top: m.bez * 0.38, width: Math.max(3, 4 * m.k), height: Math.max(3, 4 * m.k), display: full ? 'none' : undefined }} aria-hidden="true" />
+        <div className="os-screen" style={{ width: full ? fw : m.screenW, height: full ? fh : m.screenH, borderRadius: full ? 0 : Math.max(3, 6 * m.k) }}>
+          <div className="os-root" style={{ width: osW, height: osH, transform: `scale(${scale})` }}>
+            <Desktop scale={scale} osW={osW} osH={osH} reduced={reduced} booted={booted} full={full} onToggleFull={() => onFullChange(!full)} />
           </div>
           <div className="os-glare" aria-hidden="true" />
         </div>
-        <div className="flex items-center justify-center font-mono uppercase text-white/45" style={{ height: m.chin, fontSize: Math.max(5, 10 * m.k), letterSpacing: '0.24em' }} aria-hidden="true">
-          portfolio-os
-        </div>
-      </div>
+        {!full && (
+          <div className="flex items-center justify-center font-mono uppercase text-white/45" style={{ height: m.chin, fontSize: Math.max(5, 10 * m.k), letterSpacing: '0.24em' }} aria-hidden="true">
+            portfolio-os
+          </div>
+        )}
+      </motion.div>
       {/* stand */}
-      <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ top: m.bodyH - 1 }} aria-hidden="true">
+      <motion.div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ top: m.bodyH - 1, opacity: standOpacity }} aria-hidden="true">
         <div className="os-mon-stand" style={{ width: 150 * m.k, height: m.neckH + 1, clipPath: 'polygon(16% 0, 84% 0, 100% 100%, 0 100%)' }} />
         <div className="os-mon-stand os-mon-base" style={{ width: 320 * m.k, height: m.baseH, borderRadius: `${8 * m.k}px ${8 * m.k}px ${3 * m.k}px ${3 * m.k}px`, boxShadow: `${8 * m.k}px ${8 * m.k}px 0 0 var(--mon-shadow)` }} />
-      </div>
+      </motion.div>
     </div>
   )
 }
 
-/* ── The desktop (always 1280×800) ───────────────────────────────────────── */
-function Desktop({ scale, reduced, booted }) {
+/* ── The desktop (1024×640 in the monitor, viewport-shaped in full screen) ── */
+function Desktop({ scale, osW, osH, reduced, booted, full, onToggleFull }) {
+  const AREA_W = osW
+  const AREA_H = osH - BAR_H - TASK_H
+  const ICON_ROWS = Math.max(1, Math.floor((AREA_H - 32) / (ICON_H + 8)))
   const areaRef = useRef(null)
   const iconRefs = useRef({})
   const [wins, setWins] = useState([]) // { id, kind, x, y, w, h, max, min, z, nonce, from }
   const zTop = useRef(10)
   const { time, date } = useClock()
 
-  const size = (kind) => (kind === 'note' ? { w: 420, h: 290 } : { w: 760, h: 500 })
+  const size = (kind) => (kind === 'note' ? { w: 400, h: 280 } : { w: 720, h: 470 })
+
+  // the real OS-pixel → screen-pixel ratio right now (the monitor can be mid scroll-in)
+  const liveScale = useCallback(() => {
+    const r = areaRef.current?.getBoundingClientRect()
+    return r && r.width ? r.width / AREA_W : scale
+  }, [AREA_W, scale])
+
+  // the area changes size when full screen is toggled: pull windows back inside it
+  useEffect(() => {
+    setWins((ws) => ws.map((w) => {
+      const x = Math.max(0, Math.min(AREA_W - w.w, w.x))
+      const y = Math.max(0, Math.min(AREA_H - w.h, w.y))
+      return x === w.x && y === w.y ? w : { ...w, x, y }
+    }))
+  }, [AREA_W, AREA_H])
 
   const focus = useCallback((id) => {
     zTop.current += 1
@@ -89,18 +151,19 @@ function Desktop({ scale, reduced, booted }) {
       if (existing) return ws.map((w) => (w.id === id ? { ...w, z, min: false } : w))
       const kind = id === 'readme' ? 'note' : 'app'
       const { w, h } = size(kind)
-      const k = ws.length
-      const x = Math.max(0, Math.min(AREA_W - w, 200 + k * 34))
-      const y = Math.max(0, Math.min(AREA_H - h, 24 + k * 30))
+      const k = ws.length % 4 // cascade, then start over
+      const x = Math.max(0, Math.min(AREA_W - w, 150 + k * 36))
+      const y = Math.max(0, Math.min(AREA_H - h, 18 + k * 30))
       // where the window grows from: the icon's centre, in window-local OS pixels
       const icon = iconRefs.current[id]?.getBoundingClientRect()
       const box = areaRef.current?.getBoundingClientRect()
+      const ls = liveScale()
       const from = icon && box
-        ? { x: (icon.left + icon.width / 2 - box.left) / scale - x, y: (icon.top + icon.height / 2 - box.top) / scale - y }
+        ? { x: (icon.left + icon.width / 2 - box.left) / ls - x, y: (icon.top + icon.height / 2 - box.top) / ls - y }
         : { x: w / 2, y: h / 2 }
       return [...ws, { id, kind, x, y, w, h, max: false, min: false, z, nonce: 0, from }]
     })
-  }, [scale])
+  }, [AREA_W, AREA_H, liveScale])
 
   const close = useCallback((id) => {
     setWins((ws) => ws.filter((w) => w.id !== id))
@@ -133,6 +196,15 @@ function Desktop({ scale, reduced, booted }) {
           <span aria-hidden="true" className="opacity-40">|</span>
           <span>{date}</span>
           <span aria-label="Local time">{time}</span>
+          <button
+            type="button"
+            onClick={onToggleFull}
+            aria-pressed={full}
+            className="ml-1 -mr-1 h-6 px-2 inline-flex items-center gap-1.5 border border-canvas/60 uppercase tracking-[0.16em] hover:bg-canvas hover:text-ink transition-colors outline-none focus-visible:bg-canvas focus-visible:text-ink"
+          >
+            <span aria-hidden="true">{full ? '⤡' : '⤢'}</span>
+            <span>{full ? 'Exit full screen' : 'Full screen'}</span>
+          </button>
         </span>
       </div>
 
@@ -147,7 +219,7 @@ function Desktop({ scale, reduced, booted }) {
                 ref={(el) => (iconRefs.current[ic.id] = el)}
                 type="button"
                 onClick={ic.onOpen}
-                className="os-icon group flex flex-col items-center gap-2 w-[104px] h-[100px] py-1 outline-none"
+                className="os-icon group flex flex-col items-center gap-2 w-[104px] h-[92px] py-0.5 outline-none"
                 aria-label={ic.id === 'terminal' ? 'Open the terminal' : ic.id === 'readme' ? 'Open README' : `Launch ${ic.label}`}
               >
                 <span className="os-tile relative w-[64px] h-[64px] shrink-0 flex items-center justify-center border-2 border-ink bg-[var(--card-bg)] text-ink shadow-[4px_4px_0_0_var(--color-ink)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,0.25)] transition-all duration-200 group-hover:-translate-x-[2px] group-hover:-translate-y-[2px] group-hover:shadow-[6px_6px_0_0_var(--color-ink)] group-active:translate-x-[2px] group-active:translate-y-[2px] group-active:shadow-[1px_1px_0_0_var(--color-ink)]">
@@ -171,7 +243,9 @@ function Desktop({ scale, reduced, booted }) {
             <OsWindow
               key={w.id}
               win={w}
-              scale={scale}
+              areaW={AREA_W}
+              areaH={AREA_H}
+              getScale={liveScale}
               reduced={reduced}
               active={topId === w.id}
               onFocus={() => focus(w.id)}
@@ -204,6 +278,7 @@ function Desktop({ scale, reduced, booted }) {
           )
         })}
         <span className="ml-auto inline-flex items-center gap-2 pr-2 font-mono text-[11px] tracking-[0.16em] uppercase text-muted shrink-0">
+          {full && <><kbd className="px-1.5 border border-ink/50 text-ink">Esc</kbd> exit full screen <span aria-hidden="true" className="opacity-40">|</span></>}
           <kbd className="px-1.5 border border-ink/50 text-ink">/</kbd> terminal
         </span>
       </div>
@@ -212,7 +287,7 @@ function Desktop({ scale, reduced, booted }) {
 }
 
 /* ── A window ─────────────────────────────────────────────────────────────── */
-function OsWindow({ win, scale, reduced, active, onFocus, onClose, onPatch }) {
+function OsWindow({ win, areaW, areaH, getScale, reduced, active, onFocus, onClose, onPatch }) {
   const product = products.find((p) => p.id === win.id)
   const drag = useRef(null)
   const ref = useRef(null)
@@ -232,9 +307,10 @@ function OsWindow({ win, scale, reduced, active, onFocus, onClose, onPatch }) {
   const onPointerMove = (e) => {
     const d = drag.current
     if (!d) return
-    // pointer deltas are screen px; the desktop is scaled by `scale`
-    const x = Math.max(0, Math.min(AREA_W - win.w, d.x + (e.clientX - d.sx) / scale))
-    const y = Math.max(0, Math.min(AREA_H - win.h, d.y + (e.clientY - d.sy) / scale))
+    // pointer deltas are screen px; the desktop is scaled by the live scale
+    const scale = getScale()
+    const x = Math.max(0, Math.min(areaW - win.w, d.x + (e.clientX - d.sx) / scale))
+    const y = Math.max(0, Math.min(areaH - win.h, d.y + (e.clientY - d.sy) / scale))
     onPatch({ x, y })
   }
   const endDrag = () => { drag.current = null }

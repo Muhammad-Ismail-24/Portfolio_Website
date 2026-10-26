@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { projects } from '../../data/projects'
 import { products } from '../../data/products'
+import { skills } from '../../data/skills'
+import { services } from '../../data/services'
 import { getIsDark, setTheme } from '../../hooks/useTheme'
-import { EVENTS, emit, on, prefersReducedMotion, scrollToId } from '../../utils/bus'
+import { EVENTS, emit, lockScroll, on, prefersReducedMotion, scrollToId, unlockScroll } from '../../utils/bus'
 import { AbortSession, runOnyx } from '../../onyx/session'
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -25,9 +27,6 @@ const SECTIONS = {
   services: 'services',
   contact: 'contact',
 }
-
-const STACK = ['C++', 'Python', 'Java', 'JavaScript', 'React', 'Node.js', 'FastAPI', 'Git']
-const SERVICES = ['Multi-Agent AI Systems', 'Full-Stack Web Applications', 'Autonomous Automations', 'Corporate & Portfolio Sites']
 
 // English is primary; `urdu` is the alias shown dimmed in `help`
 const COMMANDS = [
@@ -84,7 +83,7 @@ function run(input, ctx) {
     case 'whoami':
       return [line('Muhammad Ismail'), line('Architecting multi-agent AI. Shipping robust full-stack experiences.', 'dim')]
     case 'about':
-      ctx.close(); scrollToId('about'); return []
+      emit(EVENTS.exitFullscreen); ctx.close(); scrollToId('about'); return []
     case 'ls':
       if (!arg) return [line('projects/   products/   services.txt   stack.txt   contact.txt   resume.pdf')]
       if (arg.startsWith('project')) return projects.map((p, i) => line(`  ${String(i + 1).padStart(2, '0')}  ${p.title.padEnd(18)} ${p.blurb}`))
@@ -103,6 +102,7 @@ function run(input, ctx) {
       const n = parseInt(arg, 10)
       let idx = Number.isFinite(n) ? n - 1 : projects.findIndex((p) => p.title.toLowerCase().includes(arg) || p.id.includes(arg))
       if (idx < 0 || idx >= projects.length || !arg) return [line(`usage: open <1-${projects.length}|name>`, 'err')]
+      emit(EVENTS.exitFullscreen)
       ctx.close()
       emit(EVENTS.openProject, { index: idx })
       return [line(`opening node ${String(idx + 1).padStart(2, '0')} — ${projects[idx].title}`)]
@@ -110,13 +110,16 @@ function run(input, ctx) {
     case 'goto': {
       const id = SECTIONS[arg]
       if (!id) return [line(`goto: unknown section "${arg}". try: ${[...new Set(Object.values(SECTIONS))].join(', ')}`, 'err')]
-      ctx.close(); scrollToId(id); return []
+      emit(EVENTS.exitFullscreen); ctx.close(); scrollToId(id); return []
     }
     case 'stack':
     case 'skills':
-      return [line(STACK.join('  ·  '))]
+      return [
+        ...Object.entries(skills).map(([cat, list]) => partsLine([{ t: `  ${cat.padEnd(11)}`, tone: 'dim' }, { t: list.join('  ·  ') }])),
+        line('  → goto stack', 'dim'),
+      ]
     case 'services':
-      return SERVICES.map((s, i) => line(`  ${i + 1}. ${s}`))
+      return [...services.map((s, i) => line(`  ${i + 1}. ${s.title}`)), line('  → goto services', 'dim')]
     case 'onyx':
       ctx.onyx(); return []
     case 'launch':
@@ -233,7 +236,7 @@ export default function Terminal() {
   const close = useCallback(() => {
     // Restart Lenis now, not in the effect: `goto`/`about` call scrollTo right after
     // close(), and Lenis ignores scrollTo while stopped.
-    window.__lenis?.start?.()
+    unlockScroll('terminal')
     setOpen(false)
     requestAnimationFrame(() => returnFocus.current?.focus?.({ preventScroll: true }))
   }, [])
@@ -309,10 +312,10 @@ export default function Terminal() {
 
   useEffect(() => {
     if (open) {
-      window.__lenis?.stop?.()
+      lockScroll('terminal')
       setTimeout(() => inputRef.current?.focus(), 30)
     } else {
-      window.__lenis?.start?.()
+      unlockScroll('terminal')
     }
   }, [open])
 
