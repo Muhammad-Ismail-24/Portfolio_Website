@@ -1,34 +1,38 @@
 /**
- * Skills, grouped by category (the order here is the order everywhere:
- * the "Built with." grid and the terminal's `stack` command).
+ * Core Capabilities — the "Stack" section and the terminal's `stack` command.
+ * The key order here is the order everywhere.
  *
- * The grid is generated from projects.js (`tags`) and products.js (`stack`):
- * a technology only shows up when some project or product uses it, and its
- * category is looked up here. A tag that is not listed below falls into "Tools".
- *
- * Everything below is named in existing project tags or in the previous
- * Capabilities / Services copy; nothing new has been added.
+ *   items      a slash-separated list (or `text`, a sentence, for `ai`)
+ *   highlight  words set in ink at weight 600; everything else is muted
  */
 export const skills = {
-  Languages: ['C++', 'Python', 'Java', 'JavaScript', 'YAML'],
-  Frontend: ['React', 'Framer Motion', 'Three.js', 'Tailwind CSS'],
-  Backend: ['Node.js', 'FastAPI', 'WebSockets', 'Real-time', 'CRDTs', 'RBAC', 'E2E encryption', 'ECS'],
-  'AI & Data': ['LangGraph', 'NLP', 'AI search'],
-  Tools: ['Git', 'SFML', 'CLI', 'AWS', 'GCP', 'Azure'],
-};
-
-/** Alternative spellings → the name used above (lower-case keys). */
-export const aliases = {
-  node: 'Node.js',
-  nodejs: 'Node.js',
-  js: 'JavaScript',
-  cpp: 'C++',
-  'c plus plus': 'C++',
-  reactjs: 'React',
-  threejs: 'Three.js',
-  tailwind: 'Tailwind CSS',
-  'framer-motion': 'Framer Motion',
-  'real time': 'Real-time',
-  realtime: 'Real-time',
-  websocket: 'WebSockets',
-};
+  languages: {
+    title: 'Languages',
+    items: ['C++', 'Java', 'Python', 'JavaScript'],
+  },
+  tools: {
+    title: 'Tools & deploy',
+    items: ['Git & GitHub', 'Docker', 'Vercel', 'Netlify'],
+    highlight: ['Git & GitHub'],
+  },
+  ai: {
+    title: 'AI Agents',
+    text: 'LLM agents and retrieval-augmented generation, built with LangGraph and RAG pipelines.',
+    highlight: ['LangGraph', 'RAG'],
+  },
+  frontend: {
+    title: 'Frontend',
+    items: ['React', 'Tailwind CSS', 'Framer Motion', 'Three.js', 'Vite'],
+    highlight: ['React'],
+  },
+  backend: {
+    title: 'Backend & Data',
+    items: ['Node.js', 'FastAPI', 'REST API design', 'MongoDB', 'Firebase', 'Supabase'],
+    highlight: ['Node.js', 'FastAPI'],
+  },
+  pipelines: {
+    title: 'Autonomous Pipelines',
+    items: ['Workflow orchestration', 'ETL & data ingestion', 'CI/CD integration'],
+    highlight: ['CI/CD'],
+  },
+}

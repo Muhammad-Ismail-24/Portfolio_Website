@@ -115,7 +115,7 @@ function run(input, ctx) {
     case 'stack':
     case 'skills':
       return [
-        ...Object.entries(skills).map(([cat, list]) => partsLine([{ t: `  ${cat.padEnd(11)}`, tone: 'dim' }, { t: list.join('  ·  ') }])),
+        ...Object.entries(skills).map(([key, g]) => partsLine([{ t: `  ${key.padEnd(11)}`, tone: 'dim' }, { t: g.items ? g.items.join(' · ') : g.text }])),
         line('  → goto stack', 'dim'),
       ]
     case 'services':

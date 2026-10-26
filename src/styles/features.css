@@ -333,6 +333,126 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
 @keyframes svc-packet { 0% { transform: translateX(0); } 100% { transform: translateX(96px); } }
 @keyframes svc-slide { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
 
+/* ── Core Capabilities ───────────────────────────────────────── */
+/* phones: one column · tablet (640+): Languages / AI Agents / three-up · desktop (1024+): Languages down the left */
+.cap-section {
+  --cap-gap: 28px;
+  --cap-shadow: var(--color-ink);
+  background-image: radial-gradient(rgb(var(--ink-rgb) / 0.13) 1px, transparent 1.2px);
+  background-size: 26px 26px;
+}
+.dark .cap-section { --cap-shadow: rgba(255, 255, 255, 0.18); }
+
+.cap-grid {
+  display: grid;
+  gap: var(--cap-gap);
+  width: 100%;
+  max-width: 1140px;
+  margin: 44px auto 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "lang" "ai" "fe" "be" "pl";
+}
+.cap-languages { grid-area: lang; }
+.cap-ai { grid-area: ai; }
+.cap-frontend { grid-area: fe; }
+.cap-backend { grid-area: be; }
+.cap-pipelines { grid-area: pl; }
+
+.cap-card {
+  position: relative;
+  border: 2px solid var(--color-ink);
+  border-radius: 14px;
+  background: var(--card-bg);
+  color: var(--color-ink);
+  box-shadow: 8px 8px 0 0 var(--cap-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cap-card:hover { transform: translate(-3px, -3px); box-shadow: 11px 11px 0 0 var(--cap-shadow); }
+.cap-icon { display: block; flex-shrink: 0; transition: transform 0.25s ease; }
+.cap-icon svg { display: block; width: 100%; height: 100%; }
+.cap-card:hover .cap-icon { transform: rotate(-6deg) scale(1.06); }
+
+.cap-h { margin: 0; font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
+.cap-list { margin: 0; font-size: 16.5px; line-height: 1.55; font-weight: 500; color: var(--text-secondary); }
+.cap-list b { font-weight: 600; color: var(--color-ink); }
+
+/* Languages + tools */
+.cap-languages { display: flex; flex-direction: column; padding: 22px 22px; }
+.cap-lang-title { font-size: 26px; }
+.cap-lang-list {
+  list-style: none; margin: 10px 0 0;
+  display: flex; flex-wrap: wrap; column-gap: 0.45em;
+  font-size: clamp(28px, 4.4vw, 36px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.16;
+}
+.cap-tools { margin-top: 20px; padding-top: 16px; border-top: 2px solid var(--color-ink); }
+.cap-tools-title { margin-bottom: 4px; font-size: 20px; }
+
+/* AI Agents */
+.cap-ai { display: flex; align-items: flex-start; gap: 16px; padding: 22px; }
+.cap-icon-lg { width: 48px; height: 48px; }
+.cap-ai-body { display: flex; flex-direction: column; gap: 8px; }
+.cap-ai-title { font-size: 28px; }
+.cap-ai-text { font-size: 17.5px; max-width: 600px; }
+
+/* Frontend / Backend & Data / Autonomous Pipelines */
+.cap-small { display: flex; flex-direction: column; gap: 10px; padding: 22px; }
+.cap-small-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cap-small-title { font-size: 24px; }
+.cap-icon-sm { width: 32px; height: 32px; }
+
+/* Wires: 2px ink, one gap long, a hollow ring at each end. Each sits in the card it
+   points into, pushed out past that card's 2px border; z-index keeps the rings
+   above every card edge. Below 1024 every wire is vertical (into the card's top). */
+.cap-wire { position: absolute; z-index: 1; background: var(--color-ink); pointer-events: none; }
+.cap-wire::before, .cap-wire::after {
+  content: ''; position: absolute; width: 12px; height: 12px; box-sizing: border-box;
+  border: 2px solid var(--color-ink); border-radius: 50%; background: var(--bg-canvas);
+}
+.cap-wire-v, .cap-wire-in { width: 2px; height: var(--cap-gap); bottom: calc(100% + 2px); left: 50%; margin-left: -1px; }
+.cap-wire-v::before, .cap-wire-in::before { top: -4px; left: -5px; }
+.cap-wire-v::after, .cap-wire-in::after { bottom: -4px; left: -5px; }
+.cap-wire-h { height: 2px; width: var(--cap-gap); top: 50%; right: calc(100% + 2px); margin-top: -1px; }
+.cap-wire-h::before { left: -4px; top: -5px; }
+.cap-wire-h::after { right: -4px; top: -5px; }
+.cap-wire-side { display: none; }
+
+@media (min-width: 640px) {
+  .cap-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: "lang lang lang" "ai ai ai" "fe be pl";
+  }
+  .cap-languages { padding: 24px 26px; }
+  .cap-ai { align-items: center; gap: 24px; padding: 24px 28px; }
+  .cap-icon-lg { width: 64px; height: 64px; }
+  .cap-ai-title { font-size: 32px; }
+  .cap-small { padding: 18px; }
+  .cap-small-title { font-size: clamp(18px, 2.6vw, 22px); }
+  .cap-icon-sm { width: 28px; height: 28px; }
+}
+
+@media (min-width: 1024px) {
+  .cap-grid {
+    grid-template-columns: clamp(250px, 25vw, 300px) repeat(3, minmax(0, 1fr));
+    grid-template-rows: minmax(170px, auto) minmax(250px, auto);
+    grid-template-areas: "lang ai ai ai" "lang fe be pl";
+  }
+  .cap-lang-title { font-size: 28px; }
+  .cap-lang-list { flex-direction: column; margin-top: 12px; font-size: 36px; }
+  .cap-tools { margin-top: auto; }
+  .cap-small { padding: 22px; }
+  .cap-small-title { font-size: clamp(20px, calc(2.6vw - 8px), 25px); }
+  .cap-icon-sm { width: 32px; height: 32px; }
+
+  .cap-wire-side { display: block; }
+  .cap-wire-in { width: var(--cap-gap); height: 2px; bottom: auto; left: auto; top: 50%; right: calc(100% + 2px); margin: -1px 0 0; }
+  .cap-wire-in::before { top: -5px; left: -4px; }
+  .cap-wire-in::after { top: -5px; bottom: auto; left: auto; right: -4px; }
+}
+/* short desktop screens (a laptop at 150%): tighter rows so less of it scrolls */
+@media (min-width: 1024px) and (max-height: 700px) {
+  .cap-grid { margin-top: 32px; grid-template-rows: minmax(150px, auto) minmax(200px, auto); }
+}
+
 
 /* ── ONYX-16: the phosphor display inside the terminal ───────── */
 .onyx-crt {
@@ -358,7 +478,9 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
 @media (prefers-reduced-motion: reduce) {
   .pn-core, .pn-orbit, .pn-pulse, .pn-callout, .pn-live-dot,
   .os-hint, .os-loadbar, .svc-art * { animation: none !important; }
-  .os-icon-li, .ct-ulink, .ct-arrow { transition: none !important; }
+  .os-icon-li, .ct-ulink, .ct-arrow, .cap-card, .cap-icon { transition: none !important; }
+  .cap-card:hover { transform: none; box-shadow: 8px 8px 0 0 var(--cap-shadow); }
+  .cap-card:hover .cap-icon { transform: none; }
   .pn-pulse { display: none; }
   .pn-edge, .pn-node, .pn-hubglyph, .pn-label, .pn-packet, .pn-callout, .spotlight-name { transition: none !important; }
   .pn-callout { transform: translate(-50%, 0); }
