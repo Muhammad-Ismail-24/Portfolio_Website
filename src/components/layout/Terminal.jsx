@@ -176,6 +176,9 @@ export default function Terminal() {
     setOpen(true)
   }, [])
   const close = useCallback(() => {
+    // Restart Lenis now, not in the effect: `goto`/`about` call scrollTo right after
+    // close(), and Lenis ignores scrollTo while stopped.
+    window.__lenis?.start?.()
     setOpen(false)
     requestAnimationFrame(() => returnFocus.current?.focus?.({ preventScroll: true }))
   }, [])
