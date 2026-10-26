@@ -4,11 +4,15 @@ import { projects } from '../../data/projects'
 import { products } from '../../data/products'
 import { getIsDark, setTheme } from '../../hooks/useTheme'
 import { EVENTS, emit, on, prefersReducedMotion, scrollToId } from '../../utils/bus'
+import { AbortSession, runOnyx } from '../../onyx/session'
 
 /* ════════════════════════════════════════════════════════════════════════════
    Terminal — a hidden command line for curious visitors.
    Open: "/" or Ctrl/⌘ + K (or the footer button). Close: Esc or `exit`.
-   Tab completes, ↑ ↓ walk history.
+   Tab completes, ↑ ↓ walk history. English is the default; every common
+   command also has an Urdu alias (madad, kholo, chalao, jao, saaf, bahar, kaun,
+   rang). `onyx` boots ONYX-16, a 16-bit VM with Urdu/English assembly
+   (src/onyx).
    ════════════════════════════════════════════════════════════════════════════ */
 
 const SECTIONS = {
@@ -25,39 +29,57 @@ const SECTIONS = {
 const STACK = ['C++', 'Python', 'Java', 'JavaScript', 'React', 'Node.js', 'FastAPI', 'Git']
 const SERVICES = ['Multi-Agent AI Systems', 'Full-Stack Web Applications', 'Autonomous Automations', 'Corporate & Portfolio Sites']
 
-const COMMANDS = {
-  help: 'list commands',
-  whoami: 'who built this',
-  ls: 'list things (try: ls projects)',
-  open: 'open a project node — open 1 … open 5',
-  launch: 'launch a product app — launch drivefetch',
-  goto: 'jump to a section — goto contact',
-  stack: 'tech I work with',
-  services: 'what I offer',
-  theme: 'theme light | dark | toggle',
-  contact: 'how to reach me',
-  resume: 'résumé',
-  ping: 'ping the network',
-  history: 'commands you ran',
-  clear: 'clear the screen',
-  exit: 'close the terminal',
+// English is primary; `urdu` is the alias shown dimmed in `help`
+const COMMANDS = [
+  { name: 'help', urdu: 'madad', desc: 'list commands' },
+  { name: 'whoami', urdu: 'kaun', desc: 'who built this' },
+  { name: 'ls', desc: 'list things (try: ls projects)' },
+  { name: 'open', urdu: 'kholo', desc: 'open a project node — open 1 … open 5' },
+  { name: 'launch', urdu: 'chalao', desc: 'launch a product app — launch drivefetch' },
+  { name: 'onyx', urdu: 'chalao onyx', desc: 'boot my 16-bit VM (Urdu/English assembly)' },
+  { name: 'goto', urdu: 'jao', desc: 'jump to a section — goto contact' },
+  { name: 'stack', desc: 'tech I work with' },
+  { name: 'services', desc: 'what I offer' },
+  { name: 'theme', urdu: 'rang andhera | roshan', desc: 'theme light | dark | toggle' },
+  { name: 'contact', desc: 'how to reach me' },
+  { name: 'resume', desc: 'résumé' },
+  { name: 'ping', desc: 'ping the network' },
+  { name: 'history', desc: 'commands you ran' },
+  { name: 'clear', urdu: 'saaf', desc: 'clear the screen' },
+  { name: 'exit', urdu: 'bahar', desc: 'close the terminal' },
+]
+
+// Urdu word → the English command it stands for
+const ALIASES = {
+  madad: 'help', kholo: 'open', chalao: 'launch', jao: 'goto',
+  saaf: 'clear', bahar: 'exit', kaun: 'whoami', rang: 'theme',
 }
+// Urdu argument → English argument (`rang andhera` = `theme dark`)
+const ARG_ALIASES = { andhera: 'dark', roshan: 'light' }
+
+const MAX_LINES = 3000
 
 const line = (text, tone = 'out') => ({ text, tone, id: Math.random().toString(36).slice(2) })
+const partsLine = (parts) => ({ parts, id: Math.random().toString(36).slice(2) })
 
 function run(input, ctx) {
   const raw = input.trim()
   if (!raw) return []
   const [cmd, ...args] = raw.split(/\s+/)
-  const arg = args.join(' ').toLowerCase()
-  const c = cmd.toLowerCase()
+  const c = ALIASES[cmd.toLowerCase()] ?? cmd.toLowerCase()
+  let arg = args.join(' ').toLowerCase()
+  if (c === 'theme') arg = ARG_ALIASES[arg] ?? arg
 
   switch (c) {
     case 'help':
     case '?':
       return [
         line('available commands:', 'dim'),
-        ...Object.entries(COMMANDS).map(([k, v]) => line(`  ${k.padEnd(10)} ${v}`)),
+        ...COMMANDS.map((k) => partsLine([
+          { t: `  ${k.name.padEnd(10)}` },
+          { t: (k.urdu ?? '').padEnd(23), tone: 'dim' },
+          { t: k.desc },
+        ])),
       ]
     case 'whoami':
       return [line('Muhammad Ismail'), line('Architecting multi-agent AI. Shipping robust full-stack experiences.', 'dim')]
@@ -95,10 +117,13 @@ function run(input, ctx) {
       return [line(STACK.join('  ·  '))]
     case 'services':
       return SERVICES.map((s, i) => line(`  ${i + 1}. ${s}`))
+    case 'onyx':
+      ctx.onyx(); return []
     case 'launch':
     case 'start': {
+      if (arg === 'onyx' || arg === 'onyx-16' || arg === 'onyx16') { ctx.onyx(); return [] }
       const p = products.find((x) => x.id === arg || `${x.word1}${x.word2}`.toLowerCase() === arg)
-      if (!p) return [line(`usage: launch <${products.map((x) => x.id).join('|')}>`, 'err')]
+      if (!p) return [line(`usage: launch <${[...products.map((x) => x.id), 'onyx'].join('|')}>`, 'err')]
       ctx.close()
       emit(EVENTS.launchApp, { id: p.id })
       return [line(`launching ${p.word1}${p.word2}…`)]
@@ -144,24 +169,49 @@ function run(input, ctx) {
 function complete(value) {
   const parts = value.split(/\s+/)
   if (parts.length <= 1) {
-    const hits = Object.keys(COMMANDS).filter((k) => k.startsWith(parts[0].toLowerCase()))
+    const names = [...COMMANDS.map((k) => k.name), ...Object.keys(ALIASES)]
+    const hits = names.filter((k) => k.startsWith(parts[0].toLowerCase()))
     return hits.length === 1 ? `${hits[0]} ` : null
   }
-  const [cmd, partial] = [parts[0].toLowerCase(), (parts[1] || '').toLowerCase()]
+  const [word, partial] = [parts[0].toLowerCase(), (parts[1] || '').toLowerCase()]
+  const cmd = ALIASES[word] ?? word
   const pool = cmd === 'goto' ? Object.keys(SECTIONS)
+    : word === 'rang' ? ['andhera', 'roshan']
     : cmd === 'theme' ? ['light', 'dark', 'toggle']
     : cmd === 'ls' ? ['projects', 'products']
     : cmd === 'open' ? [...projects.map((p) => p.id), ...products.map((p) => p.id)]
-    : cmd === 'launch' ? products.map((p) => p.id)
+    : cmd === 'launch' ? [...products.map((p) => p.id), 'onyx']
     : []
   const hits = pool.filter((k) => k.startsWith(partial))
-  return hits.length === 1 ? `${cmd} ${hits[0]}` : null
+  return hits.length === 1 ? `${word} ${hits[0]}` : null
 }
 
 const BOOT = [
   line('portfolio-os 1.0 — mesh online, 30 nodes linked', 'dim'),
-  line('type help to see what you can do. esc to close.', 'dim'),
+  line('type help (madad) to see what you can do. esc to close.', 'dim'),
 ]
+
+const TONES = {
+  cmd: 'text-ink font-semibold mt-2',
+  dim: 'text-muted',
+  dbg: 'text-muted text-[12px]',
+  strong: 'text-ink font-bold',
+  err: 'text-[#B3261E] dark:text-[#FF8A80]',
+  out: 'text-ink/90',
+}
+const toneClass = (tone) => TONES[tone] ?? TONES.out
+
+/** the 16×32 phosphor display, drawn in the site's palette */
+function OnyxDisplay({ rows }) {
+  const text = rows.map((r) => r.replace(/[^\x20-\x7e]/g, ' '))
+  const spoken = text.map((r) => r.trimEnd()).filter(Boolean).join(' / ')
+  return (
+    <div className="onyx-crt" role="img" aria-label={`ONYX display: ${spoken || 'blank'}`}>
+      <div className="onyx-crt-head">PHOSPHOR CRT DISPLAY RENDER</div>
+      <pre className="onyx-crt-screen" aria-hidden="true">{text.join('\n')}</pre>
+    </div>
+  )
+}
 
 export default function Terminal() {
   const [open, setOpen] = useState(false)
@@ -169,9 +219,11 @@ export default function Terminal() {
   const [value, setValue] = useState('')
   const [history, setHistory] = useState([])
   const [cursor, setCursor] = useState(-1)
+  const [prompt, setPrompt] = useState('$')
   const inputRef = useRef(null)
   const scrollRef = useRef(null)
   const returnFocus = useRef(null)
+  const sessionRef = useRef(null) // the running ONYX session, if any
   const reduced = prefersReducedMotion()
 
   const show = useCallback(() => {
@@ -185,6 +237,56 @@ export default function Terminal() {
     setOpen(false)
     requestAnimationFrame(() => returnFocus.current?.focus?.({ preventScroll: true }))
   }, [])
+
+  const push = useCallback((ls) => setLines((l) => {
+    const next = [...l, ...ls]
+    return next.length > MAX_LINES ? next.slice(-MAX_LINES) : next
+  }), [])
+
+  /* ── ONYX-16 mode ───────────────────────────────────────────────────────── */
+  const startOnyx = useCallback(() => {
+    if (sessionRef.current) {
+      push([line('onyx: a session is already running (Ctrl+C aborts it).', 'dim')])
+      return
+    }
+    let pending = null
+    const inbox = [] // lines typed ahead of the keyboard read, like a real keyboard buffer
+    let aborted = false
+
+    sessionRef.current = {
+      answer(text) {
+        if (pending) { const p = pending; pending = null; p.resolve(text) } else inbox.push(text)
+      },
+      abort() {
+        aborted = true
+        if (pending) { const p = pending; pending = null; p.reject(new AbortSession()) }
+      },
+    }
+    const io = {
+      print: push,
+      aborted: () => aborted,
+      sleep: (ms) => (reduced || !ms ? Promise.resolve() : new Promise((r) => setTimeout(r, ms))),
+      ask: (label) => {
+        setPrompt(label)
+        if (aborted) return Promise.reject(new AbortSession())
+        if (inbox.length) return Promise.resolve(inbox.shift())
+        return new Promise((resolve, reject) => { pending = { resolve, reject } })
+      },
+    }
+
+    setPrompt('onyx>')
+    setTimeout(() => {
+      runOnyx(io)
+        .catch((err) => {
+          if (err?.name === 'AbortSession') push([line('^C', 'cmd'), line('[ONYX] aborted. Back to the shell.', 'dim')])
+          else push([line(`[ONYX] internal error: ${err?.message ?? err}`, 'err')])
+        })
+        .finally(() => {
+          sessionRef.current = null
+          setPrompt('$')
+        })
+    }, 0)
+  }, [push, reduced])
 
   // Global shortcuts: "/" or Ctrl/⌘+K
   useEffect(() => {
@@ -221,10 +323,21 @@ export default function Terminal() {
   const submit = (e) => {
     e.preventDefault()
     const input = value
+
+    // inside ONYX the line belongs to the machine (menu choice, editor line or keyboard input)
+    if (sessionRef.current) {
+      push([line(`${prompt} ${input}`, 'cmd')])
+      if (input.trim()) setHistory((h) => [...h, input.trim()])
+      setValue('')
+      setCursor(-1)
+      sessionRef.current.answer(input)
+      return
+    }
+
     const echo = line(`$ ${input}`, 'cmd')
-    const ctx = { close, clear: () => setLines([]), history }
+    const ctx = { close, clear: () => setLines([]), history, onyx: startOnyx }
     const out = run(input, ctx)
-    if (input.trim().toLowerCase() !== 'clear') setLines((l) => [...l, echo, ...out])
+    if (input.trim().toLowerCase() !== 'clear' && input.trim().toLowerCase() !== 'saaf') push([echo, ...out])
     if (input.trim()) setHistory((h) => [...h, input.trim()])
     setValue('')
     setCursor(-1)
@@ -232,10 +345,16 @@ export default function Terminal() {
 
   const onInputKey = (e) => {
     if (e.key === 'Escape') { e.preventDefault(); close() }
+    if ((e.key === 'c' || e.key === 'C') && e.ctrlKey && sessionRef.current && !window.getSelection?.().toString()) {
+      e.preventDefault()
+      sessionRef.current.abort()
+    }
     if (e.key === 'Tab') {
       e.preventDefault()
-      const c = complete(value)
-      if (c) setValue(c)
+      if (!sessionRef.current) {
+        const c = complete(value)
+        if (c) setValue(c)
+      }
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault()
@@ -250,6 +369,8 @@ export default function Terminal() {
       if (next >= history.length) { setCursor(-1); setValue('') } else { setCursor(next); setValue(history[next]) }
     }
   }
+
+  const inOnyx = prompt !== '$'
 
   return (
     <AnimatePresence>
@@ -275,7 +396,7 @@ export default function Terminal() {
             onClick={() => inputRef.current?.focus()}
           >
             <div className="flex items-center justify-between px-4 py-2.5 border-b-2 border-ink bg-ink text-canvas">
-              <span className="text-xs tracking-[0.18em] uppercase">ismail@portfolio: ~</span>
+              <span className="text-xs tracking-[0.18em] uppercase">{inOnyx ? 'onyx-16 · lazarus machinae' : 'ismail@portfolio: ~'}</span>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); close() }}
@@ -287,23 +408,19 @@ export default function Terminal() {
             </div>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 text-[13px] md:text-sm leading-relaxed" data-lenis-prevent>
-              {lines.map((l) => (
-                <div
-                  key={l.id}
-                  className={`whitespace-pre-wrap break-words ${
-                    l.tone === 'cmd' ? 'text-ink font-semibold mt-2'
-                      : l.tone === 'dim' ? 'text-muted'
-                      : l.tone === 'err' ? 'text-[#B3261E] dark:text-[#FF8A80]'
-                      : 'text-ink/90'
-                  }`}
-                >
-                  {l.text || ' '}
+              {lines.map((l) => (l.kind === 'display' ? (
+                <OnyxDisplay key={l.id} rows={l.rows} />
+              ) : (
+                <div key={l.id} className={`whitespace-pre-wrap break-words ${l.parts ? '' : toneClass(l.tone)}`}>
+                  {l.parts
+                    ? l.parts.map((p, i) => <span key={i} className={p.tone ? toneClass(p.tone) : 'text-ink/90'}>{p.t}</span>)
+                    : (l.text || ' ')}
                 </div>
-              ))}
+              )))}
             </div>
 
             <form onSubmit={submit} className="flex items-center gap-2 px-4 py-3 border-t-2 border-ink">
-              <label htmlFor="term-input" className="text-ink font-semibold" aria-label="Command">$</label>
+              <label htmlFor="term-input" className="text-ink font-semibold shrink-0 whitespace-pre" aria-label="Command">{prompt}</label>
               <input
                 id="term-input"
                 ref={inputRef}
@@ -313,10 +430,10 @@ export default function Terminal() {
                 autoComplete="off"
                 autoCapitalize="off"
                 spellCheck={false}
-                className="flex-1 bg-transparent outline-none text-ink text-sm caret-ink placeholder:text-muted"
-                placeholder="type help"
+                className="flex-1 min-w-0 bg-transparent outline-none text-ink text-sm caret-ink placeholder:text-muted"
+                placeholder={inOnyx ? 'help · madad · exit · bahar' : 'type help (madad)'}
               />
-              <span className="hidden md:inline text-[11px] text-muted">tab ↹ · ↑↓</span>
+              <span className="hidden md:inline text-[11px] text-muted">{inOnyx ? 'ctrl+c aborts' : 'tab ↹ · ↑↓'}</span>
             </form>
           </motion.div>
         </motion.div>
