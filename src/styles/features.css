@@ -289,11 +289,20 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
 .os-loadbar { width: 100%; transform-origin: 0 50%; animation: os-load 0.65s cubic-bezier(0.3, 0.7, 0.2, 1) forwards; }
 @keyframes os-load { 0% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
 
+/* ── Contact: the email as the hero ──────────────────────────── */
+/* Scales with the viewport (6.5vw) but never wider than its container:
+   --n is the longest line's character count. */
+.ct-email-text { --cap: 6.5vw; font-size: min(var(--cap), calc(100cqw / (var(--n, 20) * 0.6))); overflow-wrap: anywhere; }
+@media (max-width: 767px) { .ct-email-text { --cap: 14vw; } }  /* phones: as large as the line allows */
+.ct-hollow { color: transparent; -webkit-text-stroke: max(1px, 0.021em) var(--color-ink); transition: color 0.25s ease; }
+.dark .ct-hollow { -webkit-text-stroke-width: max(1px, 0.016em); }
+.ct-email:hover .ct-hollow, .ct-email:focus-visible .ct-hollow { color: var(--color-ink); }
+
 /* ── Reduced motion: keep the content, drop the movement ────── */
 @media (prefers-reduced-motion: reduce) {
   .pn-core, .pn-orbit, .pn-pulse, .pn-callout, .pn-live-dot,
   .os-hint, .os-loadbar { animation: none !important; }
-  .os-icon-li { transition: none !important; }
+  .os-icon-li, .ct-hollow { transition: none !important; }
   .pn-pulse { display: none; }
   .pn-edge, .pn-node, .pn-hubglyph, .pn-label, .pn-packet, .pn-callout, .spotlight-name { transition: none !important; }
   .pn-callout { transform: translate(-50%, 0); }
