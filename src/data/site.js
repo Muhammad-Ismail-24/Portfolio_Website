@@ -2,15 +2,12 @@
  * Contact details — one place to edit.
  * Used by the Contact section (and anything else that needs them).
  *
- * TODO: fill in EMAIL and LINKEDIN_URL below. Until they are set,
- * the Contact section simply hides those rows (nothing placeholder is shown).
+ * Any value left empty is hidden in the Contact section (nothing placeholder is shown).
  */
 
-// TODO_EMAIL: your real email address, e.g. 'name@domain.com'
-export const EMAIL = ''
+export const EMAIL = 'contact.muhammadismail01@gmail.com'
 
-// TODO_LINKEDIN: your full LinkedIn profile URL, e.g. 'https://www.linkedin.com/in/your-handle'
-export const LINKEDIN_URL = ''
+export const LINKEDIN_URL = 'https://www.linkedin.com/in/muhammad-ismail-a384b3240'
 
 export const GITHUB_URL = 'https://github.com/Muhammad-Ismail-24'
 
