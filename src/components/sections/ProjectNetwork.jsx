@@ -3,6 +3,7 @@ import { AnimatePresence, animate, motion, useMotionValue } from 'framer-motion'
 import { projects } from '../../data/projects'
 import { EVENTS, on, prefersReducedMotion, scrollToId } from '../../utils/bus'
 import SplitHeading from '../ui/SplitHeading'
+import ProjectCards from './ProjectCards'
 
 /* ════════════════════════════════════════════════════════════════════════════
    ProjectNetwork — the projects live inside the network.
@@ -15,8 +16,8 @@ import SplitHeading from '../ui/SplitHeading'
    • Click a hub: the network glides aside and zooms in on it, a wire draws out
      of the node and the project card unfolds from where the wire lands.
      ← / → hop along the spine, Esc closes.
-   • "List" view shows the same projects as plain rows (also the fallback for
-     anyone who'd rather not explore).
+   • "Cards" view shows the same projects as the original stacked card deck
+     (see ProjectCards.jsx), for anyone who'd rather flip than explore.
    ════════════════════════════════════════════════════════════════════════════ */
 
 // Hub layout (0–1 of the stage) and which side each label sits on.
@@ -375,7 +376,7 @@ export default function ProjectNetwork() {
 
         <div className="flex items-center gap-4">
           <div role="group" aria-label="Project view" className="flex border-2 border-ink">
-            {['network', 'list'].map((v) => (
+            {['network', 'cards'].map((v) => (
               <button
                 key={v}
                 type="button"
@@ -392,8 +393,8 @@ export default function ProjectNetwork() {
         </div>
       </div>
 
-      {view === 'list' ? (
-        <ProjectList onOpen={(i) => { setView('network'); setTimeout(() => open(i), 80) }} />
+      {view === 'cards' ? (
+        <ProjectCards onOpenInNetwork={(i) => { setView('network'); setTimeout(() => open(i), 80) }} />
       ) : (
         <>
           <p className="mt-6 font-mono text-xs md:text-sm text-muted flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -670,37 +671,5 @@ function ProjectCard({ index, box, tall, reduced, onClose, onPrev, onNext }) {
         </div>
       </div>
     </motion.article>
-  )
-}
-
-/* ── List view ───────────────────────────── */
-function ProjectList({ onOpen }) {
-  return (
-    <ol className="mt-10 w-full border-t-2 border-ink">
-      {projects.map((p, i) => (
-        <li key={p.id} className="grid grid-cols-1 md:grid-cols-[80px_1.1fr_1.6fr_auto] gap-x-8 gap-y-3 py-7 border-b border-ink/25">
-          <span className="font-mono text-sm text-muted pt-2">{pad2(i)}</span>
-          <div>
-            <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-ink leading-none">{p.title}</h3>
-            <ul className="flex flex-wrap gap-2 mt-4" aria-label="Tech">
-              {p.tags.map((t) => (
-                <li key={t} className="px-2 py-0.5 border border-ink/60 text-xs font-semibold text-ink">{t}</li>
-              ))}
-            </ul>
-          </div>
-          <p className="text-base font-medium leading-relaxed text-[#555555] dark:text-[#A0ABC0]">{p.description}</p>
-          <div className="flex md:flex-col gap-3 md:items-end">
-            <button
-              type="button"
-              onClick={() => onOpen(i)}
-              className="inline-flex items-center gap-2 px-4 min-h-[44px] border-2 border-ink text-ink text-sm font-semibold hover:bg-ink hover:text-canvas transition-colors whitespace-nowrap"
-            >
-              Open in network <span aria-hidden="true">↗</span>
-            </button>
-            <a href={p.demo} className="inline-flex items-center px-4 min-h-[44px] text-sm font-semibold text-ink underline underline-offset-4">Demo</a>
-          </div>
-        </li>
-      ))}
-    </ol>
   )
 }
