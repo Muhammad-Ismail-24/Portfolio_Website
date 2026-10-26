@@ -5,7 +5,7 @@ export default function About() {
   const scrollToSection = useSmoothScroll();
 
   return (
-    <section id="about" className="relative z-10 w-full h-screen flex items-center px-6 md:px-16 lg:px-24 py-20">
+    <section id="about" className="relative z-10 w-full h-screen flex items-center overflow-x-clip px-6 md:px-16 lg:px-24 py-20">
       <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
         
         {/* Left Column: Typography & Buttons */}
