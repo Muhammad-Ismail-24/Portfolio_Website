@@ -8,7 +8,6 @@ import Hero from './components/sections/Hero';
 import About from './components/sections/About';
 import Products from './components/sections/Products';
 import ProjectNetwork from './components/sections/ProjectNetwork';
-import Journey from './components/sections/Journey';
 import Capabilities from './components/sections/Capabilities';
 import Services from './components/sections/Services';
 import Contact from './components/sections/Contact';
@@ -23,7 +22,6 @@ export default function App() {
         <About/>
         <Products/>
         <ProjectNetwork/>
-        <Journey/>
         <Capabilities/>
         <Services/>
         <Contact/>

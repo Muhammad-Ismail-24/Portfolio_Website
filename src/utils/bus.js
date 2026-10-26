@@ -32,18 +32,3 @@ export function scrollToId(id) {
   else el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   return true
 }
-
-/** Safe sessionStorage cache (private windows / blocked storage just miss). */
-export const cache = {
-  get(key, maxAgeMs) {
-    try {
-      const raw = sessionStorage.getItem(key)
-      if (!raw) return null
-      const { t, v } = JSON.parse(raw)
-      return Date.now() - t < maxAgeMs ? v : null
-    } catch { return null }
-  },
-  set(key, v) {
-    try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v })) } catch { /* ignore */ }
-  },
-}

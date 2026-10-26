@@ -1,5 +1,5 @@
 /* ============================================================
-   FEATURES.CSS — project network, name spotlight, portfolio-os, journey,
+   FEATURES.CSS — project network, name spotlight, portfolio-os,
    background-mesh states. Everything reads the theme tokens, so it
    follows light/dark with the rest of the site.
    ============================================================ */
@@ -289,29 +289,10 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
 .os-loadbar { width: 100%; transform-origin: 0 50%; animation: os-load 0.65s cubic-bezier(0.3, 0.7, 0.2, 1) forwards; }
 @keyframes os-load { 0% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
 
-/* ── Journey: git log graph ──────────────────────────────────── */
-.jr-line { fill: none; stroke: rgb(var(--ink-rgb) / 0.45); stroke-width: 2; transition: stroke 0.2s ease, stroke-width 0.2s ease; }
-.jr-line.is-main { stroke: var(--color-ink); stroke-width: 2.5; }
-.jr-line.is-sel { stroke: var(--color-ink); stroke-width: 3; }
-.jr-dot { fill: var(--card-bg); stroke: var(--color-ink); stroke-width: 2; transition: transform 0.2s ease; transform-box: view-box; transform-origin: 0 0; }
-.jr-dot.is-solid { fill: var(--color-ink); }
-.jr-node.is-sel .jr-dot { transform: scale(1.35); }
-.jr-head-pulse { fill: none; stroke: var(--color-ink); stroke-width: 1.5; transform-box: view-box; transform-origin: 0 0; animation: pn-pulse 2.2s ease-out infinite; }
-
-/* ── Journey: live GitHub ─────────────────────────────────────── */
-.gh-cell { display: inline-block; border-radius: 2px; background: rgb(var(--ink-rgb) / 0.07); border: 1px solid rgb(var(--ink-rgb) / 0.1); }
-.gh-cell.lvl-none { background: transparent; border-color: transparent; }
-.gh-cell.lvl-1 { background: rgb(var(--ink-rgb) / 0.28); border-color: transparent; }
-.gh-cell.lvl-2 { background: rgb(var(--ink-rgb) / 0.5); border-color: transparent; }
-.gh-cell.lvl-3 { background: rgb(var(--ink-rgb) / 0.74); border-color: transparent; }
-.gh-cell.lvl-4 { background: var(--color-ink); border-color: transparent; }
-.gh-cell.lvl-x { animation: pn-blink 1.2s ease-in-out infinite; }
-.gh-skel { display: block; border-radius: 2px; background: rgb(var(--ink-rgb) / 0.1); animation: pn-blink 1.2s ease-in-out infinite; }
-
 /* ── Reduced motion: keep the content, drop the movement ────── */
 @media (prefers-reduced-motion: reduce) {
   .pn-core, .pn-orbit, .pn-pulse, .pn-callout, .pn-live-dot,
-  .os-hint, .os-loadbar, .jr-head-pulse, .gh-cell.lvl-x, .gh-skel { animation: none !important; }
+  .os-hint, .os-loadbar { animation: none !important; }
   .os-icon-li { transition: none !important; }
   .pn-pulse { display: none; }
   .pn-edge, .pn-node, .pn-hubglyph, .pn-label, .pn-packet, .pn-callout, .spotlight-name { transition: none !important; }

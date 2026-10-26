@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { projects } from '../../data/projects'
 import { products } from '../../data/products'
-import { journey, shortHash } from '../../data/journey'
 import { getIsDark, setTheme } from '../../hooks/useTheme'
 import { EVENTS, emit, on, prefersReducedMotion, scrollToId } from '../../utils/bus'
 
@@ -17,7 +16,6 @@ const SECTIONS = {
   about: 'about',
   products: 'portfolio', portfolio: 'portfolio',
   projects: 'projects', network: 'projects',
-  journey: 'journey', history: 'journey', log: 'journey', github: 'journey',
   desktop: 'portfolio', os: 'portfolio',
   stack: 'stack', capabilities: 'stack',
   services: 'services',
@@ -33,8 +31,7 @@ const COMMANDS = {
   ls: 'list things (try: ls projects)',
   open: 'open a project node — open 1 … open 5',
   launch: 'launch a product app — launch drivefetch',
-  git: 'git log — my story as commits',
-  goto: 'jump to a section — goto journey',
+  goto: 'jump to a section — goto contact',
   stack: 'tech I work with',
   services: 'what I offer',
   theme: 'theme light | dark | toggle',
@@ -67,7 +64,7 @@ function run(input, ctx) {
     case 'about':
       ctx.close(); scrollToId('about'); return []
     case 'ls':
-      if (!arg) return [line('projects/   products/   journey.log   services.txt   stack.txt   contact.txt   resume.pdf')]
+      if (!arg) return [line('projects/   products/   services.txt   stack.txt   contact.txt   resume.pdf')]
       if (arg.startsWith('project')) return projects.map((p, i) => line(`  ${String(i + 1).padStart(2, '0')}  ${p.title.padEnd(18)} ${p.blurb}`))
       if (arg.startsWith('product')) return [...products.map((p) => line(`  ${p.id.padEnd(12)} ${p.subtitle}`)), line('  → launch <name>', 'dim')]
       return [line(`ls: ${arg}: no such directory`, 'err')]
@@ -76,7 +73,6 @@ function run(input, ctx) {
       if (arg.includes('service')) return run('services', ctx)
       if (arg.includes('contact')) return run('contact', ctx)
       if (arg.includes('resume')) return run('resume', ctx)
-      if (arg.includes('journey')) return run('git log', ctx)
       return [line(`cat: ${arg || '(nothing)'}: no such file`, 'err')]
     case 'open':
     case 'cd': {
@@ -106,17 +102,6 @@ function run(input, ctx) {
       ctx.close()
       emit(EVENTS.launchApp, { id: p.id })
       return [line(`launching ${p.word1}${p.word2}…`)]
-    }
-    case 'git': {
-      if (args[0] !== 'log') return [line('git: try git log', 'err')]
-      const rows = [...journey].reverse()
-      return [
-        ...rows.map((c, i) => {
-          const refs = [i === 0 ? 'HEAD -> main' : null, c.tag ? `tag: ${c.tag}` : null].filter(Boolean)
-          return line(`* ${shortHash(`${c.date}|${c.message}`)}${refs.length ? ` (${refs.join(', ')})` : ''} ${c.message}`)
-        }),
-        line('  → goto journey for the graph', 'dim'),
-      ]
     }
     case 'theme': {
       const want = arg === 'dark' ? true : arg === 'light' ? false : !getIsDark()
@@ -168,7 +153,6 @@ function complete(value) {
     : cmd === 'ls' ? ['projects', 'products']
     : cmd === 'open' ? [...projects.map((p) => p.id), ...products.map((p) => p.id)]
     : cmd === 'launch' ? products.map((p) => p.id)
-    : cmd === 'git' ? ['log']
     : []
   const hits = pool.filter((k) => k.startsWith(partial))
   return hits.length === 1 ? `${cmd} ${hits[0]}` : null
