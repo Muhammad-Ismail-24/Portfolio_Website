@@ -1,5 +1,5 @@
 /* ============================================================
-   FEATURES.CSS — project network, name spotlight, agent playground,
+   FEATURES.CSS — project network, name spotlight, portfolio-os, journey,
    background-mesh states. Everything reads the theme tokens, so it
    follows light/dark with the rest of the site.
    ============================================================ */
@@ -256,49 +256,41 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
   background-image: repeating-linear-gradient(-45deg, rgb(var(--ink-rgb) / 0.09) 0 2px, transparent 2px 11px);
 }
 
-/* ── Agent playground ───────────────────────────────────────── */
-.ap-edge { stroke: var(--color-ink); stroke-width: 1.5; opacity: 0.22; transition: opacity 0.3s ease, stroke-width 0.3s ease; }
-.ap-edge.is-used { opacity: 0.6; }
-.ap-edge.is-live { opacity: 1; stroke-width: 2.5; stroke-dasharray: 6 6; animation: ap-dash 0.6s linear infinite; }
-@keyframes ap-dash { to { stroke-dashoffset: -12; } }
+/* ── Products: portfolio-os ─────────────────────────────────── */
+.os-area {
+  background-image: radial-gradient(rgb(var(--ink-rgb) / 0.12) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+.os-icon-li { opacity: 0; transform: translateY(10px) scale(0.9); transition: opacity 0.4s ease var(--d, 0ms), transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0ms); }
+.is-booted .os-icon-li { opacity: 1; transform: none; }
+.os-hint { animation: pn-blink 2.4s ease-in-out infinite; }
+.os-loadbar { width: 100%; transform-origin: 0 50%; animation: os-load 0.65s cubic-bezier(0.3, 0.7, 0.2, 1) forwards; }
+@keyframes os-load { 0% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
 
-.ap-body { fill: var(--card-bg); stroke: var(--color-ink); stroke-width: 2; transition: fill 0.25s ease; }
-.ap-halo { fill: none; stroke: var(--color-ink); stroke-width: 1.25; stroke-dasharray: 2 5; opacity: 0; transition: opacity 0.3s ease; }
-.ap-node.is-visited .ap-halo { opacity: 0.6; }
-.ap-node.is-lit .ap-body { fill: var(--color-ink); }
-.ap-icon { stroke: var(--color-ink); transition: stroke 0.25s ease; }
-.ap-node.is-lit .ap-icon { stroke: var(--card-bg); }
-.ap-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  fill: var(--color-ink);
-}
-.ap-ping {
-  fill: none;
-  stroke: var(--color-ink);
-  stroke-width: 1.5;
-  transform-box: view-box;
-  transform-origin: 0 0;
-  animation: pn-pulse 1.1s ease-out infinite;
-}
-.ap-packet { fill: var(--color-ink); }
-.ap-status-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  border: 1.5px solid var(--color-ink);
-}
-.ap-status-dot.running { background: var(--color-ink); animation: pn-blink 0.9s steps(2, jump-none) infinite; }
-.ap-status-dot.done { background: var(--color-ink); }
+/* ── Journey: git log graph ──────────────────────────────────── */
+.jr-line { fill: none; stroke: rgb(var(--ink-rgb) / 0.45); stroke-width: 2; transition: stroke 0.2s ease, stroke-width 0.2s ease; }
+.jr-line.is-main { stroke: var(--color-ink); stroke-width: 2.5; }
+.jr-line.is-sel { stroke: var(--color-ink); stroke-width: 3; }
+.jr-dot { fill: var(--card-bg); stroke: var(--color-ink); stroke-width: 2; transition: transform 0.2s ease; transform-box: view-box; transform-origin: 0 0; }
+.jr-dot.is-solid { fill: var(--color-ink); }
+.jr-node.is-sel .jr-dot { transform: scale(1.35); }
+.jr-head-pulse { fill: none; stroke: var(--color-ink); stroke-width: 1.5; transform-box: view-box; transform-origin: 0 0; animation: pn-pulse 2.2s ease-out infinite; }
+
+/* ── Journey: live GitHub ─────────────────────────────────────── */
+.gh-cell { display: inline-block; border-radius: 2px; background: rgb(var(--ink-rgb) / 0.07); border: 1px solid rgb(var(--ink-rgb) / 0.1); }
+.gh-cell.lvl-none { background: transparent; border-color: transparent; }
+.gh-cell.lvl-1 { background: rgb(var(--ink-rgb) / 0.28); border-color: transparent; }
+.gh-cell.lvl-2 { background: rgb(var(--ink-rgb) / 0.5); border-color: transparent; }
+.gh-cell.lvl-3 { background: rgb(var(--ink-rgb) / 0.74); border-color: transparent; }
+.gh-cell.lvl-4 { background: var(--color-ink); border-color: transparent; }
+.gh-cell.lvl-x { animation: pn-blink 1.2s ease-in-out infinite; }
+.gh-skel { display: block; border-radius: 2px; background: rgb(var(--ink-rgb) / 0.1); animation: pn-blink 1.2s ease-in-out infinite; }
 
 /* ── Reduced motion: keep the content, drop the movement ────── */
 @media (prefers-reduced-motion: reduce) {
   .pn-core, .pn-orbit, .pn-pulse, .pn-callout, .pn-live-dot,
-  .ap-ping, .ap-edge.is-live, .ap-status-dot.running { animation: none !important; }
+  .os-hint, .os-loadbar, .jr-head-pulse, .gh-cell.lvl-x, .gh-skel { animation: none !important; }
+  .os-icon-li { transition: none !important; }
   .pn-pulse { display: none; }
   .pn-edge, .pn-node, .pn-hubglyph, .pn-label, .pn-packet, .pn-callout, .spotlight-name { transition: none !important; }
   .pn-callout { transform: translate(-50%, 0); }

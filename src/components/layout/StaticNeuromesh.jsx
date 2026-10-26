@@ -544,7 +544,7 @@ function useIsDark() {
 }
 
 // Clicks on these never drop a node
-const NO_NODE = 'a, button, input, textarea, select, label, summary, [role="button"], [role="dialog"], .pn-stage, #playground, [data-no-node]'
+const NO_NODE = 'a, button, input, textarea, select, label, summary, [role="button"], [role="dialog"], .pn-stage, .os-desktop, #journey, [data-no-node]'
 
 // ─── Scene ──────────────────────────────────────────────────────────────────
 function NeuromeshScene() {

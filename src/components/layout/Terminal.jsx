@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { projects } from '../../data/projects'
+import { products } from '../../data/products'
+import { journey, shortHash } from '../../data/journey'
 import { getIsDark, setTheme } from '../../hooks/useTheme'
 import { EVENTS, emit, on, prefersReducedMotion, scrollToId } from '../../utils/bus'
 
@@ -15,7 +17,8 @@ const SECTIONS = {
   about: 'about',
   products: 'portfolio', portfolio: 'portfolio',
   projects: 'projects', network: 'projects',
-  playground: 'playground', agents: 'playground', lab: 'playground',
+  journey: 'journey', history: 'journey', log: 'journey', github: 'journey',
+  desktop: 'portfolio', os: 'portfolio',
   stack: 'stack', capabilities: 'stack',
   services: 'services',
   contact: 'contact',
@@ -29,10 +32,11 @@ const COMMANDS = {
   whoami: 'who built this',
   ls: 'list things (try: ls projects)',
   open: 'open a project node — open 1 … open 5',
-  goto: 'jump to a section — goto playground',
+  launch: 'launch a product app — launch drivefetch',
+  git: 'git log — my story as commits',
+  goto: 'jump to a section — goto journey',
   stack: 'tech I work with',
   services: 'what I offer',
-  agents: 'run the agent playground — agents 1 … 3',
   theme: 'theme light | dark | toggle',
   contact: 'how to reach me',
   resume: 'résumé',
@@ -63,20 +67,21 @@ function run(input, ctx) {
     case 'about':
       ctx.close(); scrollToId('about'); return []
     case 'ls':
-      if (!arg) return [line('projects/   products/   playground/   services.txt   stack.txt   contact.txt   resume.pdf')]
+      if (!arg) return [line('projects/   products/   journey.log   services.txt   stack.txt   contact.txt   resume.pdf')]
       if (arg.startsWith('project')) return projects.map((p, i) => line(`  ${String(i + 1).padStart(2, '0')}  ${p.title.padEnd(18)} ${p.blurb}`))
-      if (arg.startsWith('product')) return [line('  DriveFetch   ShiFa   GitSync'), line('  → goto products', 'dim')]
-      if (arg.startsWith('playground')) return [line('  run.sh'), line('  → agents 1 … 3 to run it', 'dim')]
+      if (arg.startsWith('product')) return [...products.map((p) => line(`  ${p.id.padEnd(12)} ${p.subtitle}`)), line('  → launch <name>', 'dim')]
       return [line(`ls: ${arg}: no such directory`, 'err')]
     case 'cat':
       if (arg.includes('stack')) return run('stack', ctx)
       if (arg.includes('service')) return run('services', ctx)
       if (arg.includes('contact')) return run('contact', ctx)
       if (arg.includes('resume')) return run('resume', ctx)
+      if (arg.includes('journey')) return run('git log', ctx)
       return [line(`cat: ${arg || '(nothing)'}: no such file`, 'err')]
     case 'open':
     case 'cd': {
       if (c === 'cd' && SECTIONS[arg.replace(/\/$/, '')]) return run(`goto ${arg}`, ctx)
+      if (products.some((p) => p.id === arg)) return run(`launch ${arg}`, ctx)
       const n = parseInt(arg, 10)
       let idx = Number.isFinite(n) ? n - 1 : projects.findIndex((p) => p.title.toLowerCase().includes(arg) || p.id.includes(arg))
       if (idx < 0 || idx >= projects.length || !arg) return [line(`usage: open <1-${projects.length}|name>`, 'err')]
@@ -94,12 +99,24 @@ function run(input, ctx) {
       return [line(STACK.join('  ·  '))]
     case 'services':
       return SERVICES.map((s, i) => line(`  ${i + 1}. ${s}`))
-    case 'agents':
-    case 'run': {
-      const n = parseInt(args[0], 10)
+    case 'launch':
+    case 'start': {
+      const p = products.find((x) => x.id === arg || `${x.word1}${x.word2}`.toLowerCase() === arg)
+      if (!p) return [line(`usage: launch <${products.map((x) => x.id).join('|')}>`, 'err')]
       ctx.close()
-      emit(EVENTS.runAgents, { task: Number.isFinite(n) ? n - 1 : undefined })
-      return []
+      emit(EVENTS.launchApp, { id: p.id })
+      return [line(`launching ${p.word1}${p.word2}…`)]
+    }
+    case 'git': {
+      if (args[0] !== 'log') return [line('git: try git log', 'err')]
+      const rows = [...journey].reverse()
+      return [
+        ...rows.map((c, i) => {
+          const refs = [i === 0 ? 'HEAD -> main' : null, c.tag ? `tag: ${c.tag}` : null].filter(Boolean)
+          return line(`* ${shortHash(`${c.date}|${c.message}`)}${refs.length ? ` (${refs.join(', ')})` : ''} ${c.message}`)
+        }),
+        line('  → goto journey for the graph', 'dim'),
+      ]
     }
     case 'theme': {
       const want = arg === 'dark' ? true : arg === 'light' ? false : !getIsDark()
@@ -148,8 +165,10 @@ function complete(value) {
   const [cmd, partial] = [parts[0].toLowerCase(), (parts[1] || '').toLowerCase()]
   const pool = cmd === 'goto' ? Object.keys(SECTIONS)
     : cmd === 'theme' ? ['light', 'dark', 'toggle']
-    : cmd === 'ls' ? ['projects', 'products', 'playground']
-    : cmd === 'open' ? projects.map((p) => p.id)
+    : cmd === 'ls' ? ['projects', 'products']
+    : cmd === 'open' ? [...projects.map((p) => p.id), ...products.map((p) => p.id)]
+    : cmd === 'launch' ? products.map((p) => p.id)
+    : cmd === 'git' ? ['log']
     : []
   const hits = pool.filter((k) => k.startsWith(partial))
   return hits.length === 1 ? `${cmd} ${hits[0]}` : null
