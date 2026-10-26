@@ -1,252 +1,107 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { prefersReducedMotion } from '../../utils/bus'
+import Monitor, { chromeHeight, monitorChrome } from './os/Monitor'
+import Phone from './os/Phone'
 
-/* ─────────────────────────────────────────────
-   DATA
-   ───────────────────────────────────────────── */
-const products = [
-  {
-    word1: 'Drive',
-    word2: 'Fetch',
-    subtitle: 'Intelligent File Retrieval',
-    description:
-      'A blazing-fast cloud-storage aggregator that unifies Google Drive, Dropbox, and OneDrive under a single search interface. Leverages NLP-based intent parsing to surface the right file in under 200 ms.',
-    image: '/assets/products/drivefetch.png',
-  },
-  {
-    word1: 'Shi',
-    word2: 'fa',
-    subtitle: 'AI-Powered Health Assistant',
-    description:
-      'An end-to-end telemedicine platform that pairs patients with specialists via real-time symptom triage powered by a fine-tuned LLM. Supports multilingual voice input and HIPAA-compliant data handling.',
-    image: '/assets/products/shifa.png',
-  },
-  {
-    word1: 'Git',
-    word2: 'Sync',
-    subtitle: 'Repository Orchestration',
-    description:
-      'A developer tool that keeps mono-repos, forks, and upstream mirrors perfectly synchronised. Runs conflict-free rebases on a cron and delivers Slack/Discord notifications when human intervention is required.',
-    image: '/assets/products/gitsync.png',
-  },
-];
+/* ════════════════════════════════════════════════════════════════════════════
+   Products — portfolio-os.
 
-/* ─────────────────────────────────────────────
-   COMPONENT
-   ───────────────────────────────────────────── */
+   A small computer: each web app is an icon on its desktop. Clicking one
+   launches a browser-style window (tab, address bar, loading bar) showing the
+   product's page. Windows drag by their tab strip, stack, minimise to the
+   taskbar, maximise and close (Esc closes the focused one).
+   The Terminal icon opens the site's hidden terminal; README explains the OS.
+   Terminal: `launch drivefetch` (or `open shifa`) opens a window from anywhere.
+
+   Layout: the section is at least one viewport tall with its content centred.
+   The OS renders at real pixels (no scaling). The screen takes the height the
+   heading leaves, clamped to 480–640 so an open app window always has room
+   (short screens scroll a little rather than crush it), and is never wider
+   than 16:10 of that height, the content width or 1100px.
+   Below 650px of viewport height the stand is a slim base. "Full screen" turns
+   the screen into a fixed overlay above the nav. Under 768px a portrait phone
+   (os/Phone.jsx) replaces it, filling the width up to 420px.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+const MAX_SCREEN_W = 1100
+const MIN_SCREEN_H = 480
+const MAX_SCREEN_H = 640
+const MAX_ASPECT = 1.6     // screen width : height, at most 16:10
+const MAX_PHONE = 420
+const PHONE_FULL_W = 412 // outer width of the phone at scale 1 (390 screen + 2 × 11 bezel)
+
+const NAV_CLEARANCE = 72   // the floating nav sits in the top 72px
+const PAD_BOTTOM = 10
+const GAP = 10             // subtitle → monitor
+
 export default function Products() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const sectionRef = useRef(null)
+  const headRef = useRef(null)
+  const boxRef = useRef(null)
+  const [booted, setBooted] = useState(false)
+  const [full, setFull] = useState(false)
+  const [m, setM] = useState({ cw: 0, iw: 1440, ih: 900, headH: 0 })
+  const reduced = prefersReducedMotion()
 
-  const carouselRef = useRef(null);
-  const isThrottledRef = useRef(false);
-
-  /* ── Scroll interception (throttled, infinite loop) ────── */
-  const handleWheel = useCallback(
-    (e) => {
-      const dx = e.deltaX;
-      const dy = e.deltaY;
-
-      const isScrollingDown = dx > 0 || dy > 50;
-      const isScrollingUp = dx < 0 || dy < -50;
-
-      if (isScrollingDown) {
-        e.preventDefault();
-        if (!isThrottledRef.current) {
-          setActiveIndex((prev) => (prev + 1) % products.length);
-          isThrottledRef.current = true;
-          setTimeout(() => { isThrottledRef.current = false; }, 400);
-        }
-      } else if (isScrollingUp) {
-        e.preventDefault();
-        if (!isThrottledRef.current) {
-          setActiveIndex((prev) => (prev - 1 + products.length) % products.length);
-          isThrottledRef.current = true;
-          setTimeout(() => { isThrottledRef.current = false; }, 400);
-        }
-      }
-    },
-    [],
-  );
+  useLayoutEffect(() => {
+    const box = boxRef.current
+    const head = headRef.current
+    if (!box || !head) return undefined
+    const measure = () => setM({ cw: box.clientWidth, iw: window.innerWidth, ih: window.innerHeight, headH: head.offsetHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(box)
+    ro.observe(head)
+    window.addEventListener('resize', measure)
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure) }
+  }, [])
 
   useEffect(() => {
-    const el = carouselRef.current;
-    if (!el) return;
-    el.addEventListener('wheel', handleWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheel);
-  }, [handleWheel]);
+    const el = sectionRef.current
+    if (!el) return undefined
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setBooted(true) }, { threshold: 0.3 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
-  /* ── Offset-driven animation values ────── */
-  const getCardAnimation = (offset) => {
-    const abs = Math.abs(offset);
-    if (abs === 0) return { scale: 1, rotate: 0, zIndex: 30, y: 0, x: 0, opacity: 1 };
-    if (abs === 1)
-      return { scale: 0.9, rotate: offset * 8, zIndex: 20, y: 20, x: offset * 100, opacity: 0.85 };
-    return { scale: 0.8, rotate: offset * 12, zIndex: 10, y: 40, x: offset * 180, opacity: 0.6 };
-  };
+  const phone = m.iw < 768
+  useEffect(() => { if (phone) setFull(false) }, [phone])
 
-  const activeProduct = products[activeIndex];
+  let body = null
+  if (m.cw > 0) {
+    if (phone) {
+      const s = Math.max(0.4, Math.min(1.1, Math.min(m.cw, MAX_PHONE) / PHONE_FULL_W))
+      body = <Phone scale={s} reduced={reduced} booted={booted} />
+    } else {
+      const slim = m.ih < 650
+      const c = monitorChrome(slim)
+      const avail = m.ih - NAV_CLEARANCE - PAD_BOTTOM - m.headH - GAP - chromeHeight(c)
+      const screenH = Math.round(Math.min(MAX_SCREEN_H, Math.max(MIN_SCREEN_H, avail)))
+      const screenW = Math.round(Math.min(MAX_SCREEN_W, m.cw - 2 * c.bez, screenH * MAX_ASPECT))
+      body = <Monitor screenW={screenW} screenH={screenH} slim={slim} reduced={reduced} booted={booted} full={full} onFullChange={setFull} />
+    }
+  }
 
-  /* ── Render ─────────────────────────────── */
   return (
     <section
       id="portfolio"
-      ref={carouselRef}
-      className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden pt-16"
+      ref={sectionRef}
+      className="relative w-full min-h-[100svh] flex flex-col items-center justify-center px-4 md:px-8 lg:px-24"
+      // above the nav (z-50) while the OS is full screen
+      style={{ zIndex: full ? 60 : 10, paddingTop: NAV_CLEARANCE, paddingBottom: PAD_BOTTOM }}
     >
-      {/* ── Heading ─────────────────────────── */}
-      <h2 className="text-[10vw] lg:text-[8vw] leading-none font-black tracking-tighter text-[#0A0A0A] dark:text-white select-none">
-        Produc<span className="text-hollow">ts.</span>
-      </h2>
-
-      {/* ── Fanned Card Carousel ────────────── */}
-      <div className="relative w-full flex items-center justify-center h-[55vh] min-h-[350px] mt-4">
-        {products.map((product, index) => {
-          let offset = index - activeIndex;
-          const half = Math.floor(products.length / 2);
-          // Wrap the offsets for a circular fanned layout
-          if (offset > half) offset -= products.length;
-          if (offset < -half) offset += products.length;
-          const anim = getCardAnimation(offset);
-
-          return (
-            <motion.div
-              key={product.word1 + product.word2}
-              animate={{
-                scale: anim.scale,
-                rotate: anim.rotate,
-                y: anim.y,
-                x: anim.x,
-                opacity: anim.opacity,
-              }}
-              transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-              style={{ zIndex: anim.zIndex }}
-              className="w-[280px] lg:w-[320px] h-full absolute bg-[#F5F3EC] dark:bg-[#080A17] border border-[#0A0A0A] dark:border-[#2A2A34] rounded-xl overflow-hidden cursor-pointer shadow-xl dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
-              onClick={() => {
-                if (offset === 0) {
-                  setIsModalOpen(true);
-                } else {
-                  setActiveIndex(index);
-                }
-              }}
-            >
-              {/* Card Inner Structure */}
-              <div className="w-full h-full flex flex-col p-4">
-                {/* Top Image Mockup Placeholder */}
-                <div className="w-full h-[55%] bg-[#1A1A1A] rounded-lg shadow-inner overflow-hidden">
-                  {/* Later, you can place an actual <img /> here */}
-                </div>
-
-                {/* Bottom Text Content */}
-                <div className="flex flex-col mt-5 px-4 pb-4 text-left">
-                  <h3 className="text-2xl font-black text-[#0A0A0A] dark:text-white leading-tight tracking-tight">
-                    {product.word1}{product.word2}
-                  </h3>
-
-                  {/* Subtitle - Small, uppercase, tracked out */}
-                  <p className="text-[10px] font-bold text-[#888888] dark:text-[#64748B] mt-1 tracking-widest uppercase">
-                    {product.subtitle}
-                  </p>
-
-                  {/* Description - Fills the empty space, clamped to 3 lines */}
-                  <p className="text-sm font-medium text-[#555555] dark:text-[#94A3B8] mt-4 leading-relaxed line-clamp-3">
-                    {product.description}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
+      <div ref={headRef} className="flex flex-col items-center">
+        <h2 className="text-[clamp(48px,min(7vw,11svh),96px)] leading-none font-black tracking-tighter text-ink select-none">
+          Produc<span className="text-hollow">ts.</span>
+        </h2>
+        <p className="mt-1.5 font-mono text-xs md:text-sm text-muted text-center md:whitespace-nowrap">
+          Web apps I&apos;ve built, running on portfolio-os. {phone ? 'Tap' : 'Click'} one to launch it.
+        </p>
       </div>
 
-      {/* ── Dot Indicators ──────────────────── */}
-      <div className="flex gap-2 mt-8">
-        {products.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActiveIndex(i)}
-            className={`w-2.5 h-2.5 rounded-full border border-[#0A0A0A] dark:border-white transition-colors ${
-              i === activeIndex
-                ? 'bg-[#0A0A0A] dark:bg-white'
-                : 'bg-transparent'
-            }`}
-          />
-        ))}
+      <div ref={boxRef} className="w-full" style={{ marginTop: GAP }}>
+        {body}
       </div>
-
-      {/* ── Expanded Modal ──────────────────── */}
-      <AnimatePresence>
-        {isModalOpen && activeProduct && (
-          <motion.div
-            key="product-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#F4EFE6]/60 dark:bg-[#07090F]/70 backdrop-blur-xl p-4 md:p-8"
-            onClick={() => setIsModalOpen(false)}
-          >
-            <motion.div
-              key="product-card"
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              className="w-full max-w-5xl bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-[#0A0A0A] dark:border-[#2A2A34] rounded-3xl flex flex-col lg:flex-row overflow-y-auto max-h-[90vh] shadow-2xl relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full border border-[#0A0A0A] dark:border-white/40 text-[#0A0A0A] dark:text-white hover:bg-[#0A0A0A] hover:text-white dark:hover:bg-white dark:hover:text-[#0A0A0A] transition-colors text-lg font-semibold"
-              >
-                ✕
-              </button>
-
-              {/* Left Column — Image */}
-              <div className="w-full lg:w-1/2 p-6 lg:p-12 flex items-center justify-center bg-[#E8E4D9] dark:bg-[#080A17]">
-                <div className="w-full aspect-video rounded-lg overflow-hidden border border-[#0A0A0A]/10 dark:border-[#2A2A34] shadow-lg">
-                  <img
-                    src={activeProduct.image}
-                    alt={`${activeProduct.word1}${activeProduct.word2}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Right Column — Content */}
-              <div className="w-full lg:w-1/2 p-6 lg:p-12 flex flex-col justify-center">
-                <div className="flex flex-row flex-wrap items-center gap-x-2">
-                  <span className="font-black text-5xl md:text-7xl tracking-tighter text-[#0A0A0A] dark:text-white uppercase">
-                    {activeProduct.word1}
-                  </span>
-                  <span className="font-black text-5xl md:text-7xl tracking-tighter text-hollow uppercase">
-                    {activeProduct.word2}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm font-semibold uppercase tracking-widest text-[#888888] dark:text-[#64748B]">
-                  {activeProduct.subtitle}
-                </p>
-
-                <p className="mt-6 text-lg text-[#555555] dark:text-[#94A3B8] leading-relaxed">
-                  {activeProduct.description}
-                </p>
-
-                <div className="mt-10 flex gap-4 flex-wrap">
-                  <button className="px-6 py-3 border border-[#0A0A0A] dark:border-white bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] font-semibold rounded-md hover:opacity-80 transition-opacity">
-                    Live Deployment →
-                  </button>
-                  <button className="px-6 py-3 border border-[#0A0A0A] dark:border-white text-[#0A0A0A] dark:text-white font-semibold rounded-md hover:bg-[#0A0A0A] hover:text-white dark:hover:bg-white dark:hover:text-[#0A0A0A] transition-colors">
-                    Video Demo
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
-  );
+  )
 }

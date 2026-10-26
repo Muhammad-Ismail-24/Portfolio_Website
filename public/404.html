@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 · Node not found | Muhammad Ismail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    // same theme choice as the main site
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    } catch (e) {}
+  </script>
+  <style>
+    :root { --canvas: #F5F3EC; --ink: #0A0A0A; --muted: #6B6B6B; }
+    .dark { --canvas: #0A0F1E; --ink: #FFFFFF; --muted: #A0ABC0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--canvas);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      align-items: center;
+      padding: 48px clamp(24px, 6vw, 96px);
+      background-image: radial-gradient(color-mix(in srgb, var(--ink) 12%, transparent) 1px, transparent 1.2px);
+      background-size: 26px 26px;
+    }
+    main { width: 100%; display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
+    @media (min-width: 900px) { main { grid-template-columns: 1.1fr 1fr; } }
+    .eyebrow { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+    h1 { margin-top: 14px; font-size: clamp(64px, 11vw, 168px); line-height: 0.88; letter-spacing: -0.04em; font-weight: 700; }
+    .hollow { color: transparent; -webkit-text-stroke: 2px var(--ink); }
+    .dark .hollow { -webkit-text-stroke-width: 1.5px; }
+    p.lead { margin-top: 28px; max-width: 34ch; font-size: 20px; font-weight: 500; line-height: 1.5; color: var(--muted); }
+    .actions { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 12px; }
+    a.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 24px; font-weight: 600; font-size: 15px; text-decoration: none; border: 2px solid var(--ink); color: var(--ink); transition: background-color .2s, color .2s; }
+    a.btn.primary { background: var(--ink); color: var(--canvas); box-shadow: 6px 6px 0 0 color-mix(in srgb, var(--ink) 30%, transparent); }
+    a.btn:hover { background: var(--ink); color: var(--canvas); }
+    svg { width: 100%; max-width: 560px; height: auto; justify-self: center; overflow: visible; }
+    .edge { stroke: var(--ink); stroke-width: 1.5; opacity: .55; }
+    .edge.cut { stroke-dasharray: 4 6; animation: flicker 2.6s steps(1) infinite; }
+    .node { fill: var(--canvas); stroke: var(--ink); stroke-width: 1.8; }
+    .hub { fill: var(--canvas); stroke: var(--ink); stroke-width: 2.5; }
+    .core { fill: var(--ink); }
+    .ghost { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 5 6; transform-box: fill-box; transform-origin: center; animation: spin 14s linear infinite; }
+    .q { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 700; fill: var(--ink); }
+    .spark { fill: var(--ink); animation: drift 2.6s ease-in-out infinite; }
+    @keyframes flicker { 0%, 100% { opacity: .55; } 40% { opacity: .1; } 44% { opacity: .55; } 47% { opacity: .15; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes drift { 0% { transform: translate(0, 0); opacity: 1; } 100% { transform: translate(60px, -18px); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .edge.cut, .ghost, .spark { animation: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <p class="eyebrow">Error 404 · route unresolved</p>
+      <h1>Lost <span class="hollow">node.</span></h1>
+      <p class="lead">This node doesn't exist. The link broke somewhere between here and the rest of the network.</p>
+      <div class="actions">
+        <a class="btn primary" href="/">Back to the network <span aria-hidden="true">→</span></a>
+        <a class="btn" href="/#projects">See projects</a>
+      </div>
+    </section>
+
+    <svg viewBox="0 0 560 400" role="img" aria-label="A small network with one node missing and its link cut">
+      <!-- the cluster that's still connected -->
+      <line class="edge" x1="120" y1="120" x2="210" y2="80" />
+      <line class="edge" x1="120" y1="120" x2="90" y2="230" />
+      <line class="edge" x1="120" y1="120" x2="220" y2="200" />
+      <line class="edge" x1="210" y1="80" x2="220" y2="200" />
+      <line class="edge" x1="90" y1="230" x2="220" y2="200" />
+      <line class="edge" x1="90" y1="230" x2="160" y2="320" />
+      <line class="edge" x1="220" y1="200" x2="160" y2="320" />
+      <line class="edge" x1="210" y1="80" x2="300" y2="60" />
+      <!-- the broken link toward the missing node -->
+      <line class="edge" x1="220" y1="200" x2="300" y2="214" />
+      <line class="edge cut" x1="300" y1="214" x2="384" y2="228" />
+      <circle class="spark" cx="300" cy="214" r="3" />
+
+      <circle class="node" cx="210" cy="80" r="6" />
+      <circle class="node" cx="300" cy="60" r="5" />
+      <circle class="node" cx="90" cy="230" r="6" />
+      <circle class="node" cx="160" cy="320" r="6" />
+      <circle class="hub" cx="120" cy="120" r="16" />
+      <circle class="core" cx="120" cy="120" r="5" />
+      <circle class="hub" cx="220" cy="200" r="13" />
+      <circle class="core" cx="220" cy="200" r="4" />
+
+      <!-- the node that should be here -->
+      <circle class="ghost" cx="440" cy="236" r="46" />
+      <text class="q" x="440" y="244" text-anchor="middle">?</text>
+    </svg>
+  </main>
+</body>
+</html>

@@ -1,79 +1,112 @@
-export default function Capabilities() {
+import SplitHeading from '../ui/SplitHeading'
+import { skills } from '../../data/skills'
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Core Capabilities. — bordered cards on a dotted grid, joined by short ink
+   wires. Desktop: Languages down the left, AI Agents across the top right,
+   three cards under it. Tablet stacks Languages / AI Agents / three-up; phones
+   stack every card. Copy lives in src/data/skills.js; layout, wires and hover
+   live in features.css (.cap-*).
+
+   Each wire is a span inside the card it points INTO, sized to the grid gap
+   and pushed out past that card's border, so it follows the card at any width
+   and its rings paint over the card it comes FROM (earlier in the DOM).
+   ════════════════════════════════════════════════════════════════════════════ */
+
+const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+// "built with LangGraph and RAG" → ['built with ', <b>LangGraph</b>, ' and ', <b>RAG</b>]
+function emphasise(text, highlight = []) {
+  if (!highlight.length) return text
+  const re = new RegExp(`(?<![\\w])(${highlight.map(escape).join('|')})(?![\\w])`)
+  return text.split(re).map((part, i) => (i % 2 ? <b key={i}>{part}</b> : part))
+}
+
+function List({ group, className = '' }) {
   return (
-    <section id="stack" className="relative w-full h-screen flex flex-col items-center justify-center pt-16 pb-6 px-6 md:px-16 lg:px-24 z-10 overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-row flex-wrap justify-center gap-x-4 mb-4">
-        <span className="text-[9vw] lg:text-[5.5vw] font-black tracking-tighter text-[#0A0A0A] dark:text-white leading-none">
-          Core
-        </span>
-        <span className="text-[9vw] lg:text-[5.5vw] font-black tracking-tighter text-hollow leading-none">
-          Capabilities.
-        </span>
+    <p className={`cap-list ${className}`}>
+      {group.items.map((item, i) => (
+        <span key={item}>{i > 0 && ' / '}{emphasise(item, group.highlight)}</span>
+      ))}
+    </p>
+  )
+}
+
+/* ── Line icons (24×24, ink) ─────────────────────────────────────────────── */
+const ICONS = {
+  ai: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round">
+      <circle cx="12" cy="12" r="3" /><circle cx="4.5" cy="5" r="2" /><circle cx="19.5" cy="5" r="2" /><circle cx="4.5" cy="19" r="2" /><circle cx="19.5" cy="19" r="2" />
+      <path d="M6.1 6.4l3.6 3.4M17.9 6.4l-3.6 3.4M6.1 17.6l3.6-3.4M17.9 17.6l-3.6-3.4" />
+    </svg>
+  ),
+  frontend: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
+      <rect x="2.5" y="4" width="19" height="16" rx="1.5" /><path d="M2.5 8h19" /><rect x="5.5" y="11" width="6" height="6" /><path d="M14 12h4.5M14 15h3" />
+    </svg>
+  ),
+  backend: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
+      <ellipse cx="12" cy="5.5" rx="7.5" ry="2.5" />
+      <path d="M4.5 5.5v6.5c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5V5.5M4.5 12v6.5c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5V12" />
+    </svg>
+  ),
+  pipelines: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
+      <rect x="1.5" y="9" width="5" height="6" rx="1" /><rect x="9.5" y="9" width="5" height="6" rx="1" /><rect x="17.5" y="9" width="5" height="6" rx="1" />
+      <path d="M6.5 12h3M14.5 12h3" /><circle cx="4" cy="12" r="0.8" fill="currentColor" />
+    </svg>
+  ),
+}
+
+const Icon = ({ name, className }) => <span className={`cap-icon ${className}`} aria-hidden="true">{ICONS[name]}</span>
+
+function SmallCard({ name, wires }) {
+  const group = skills[name]
+  return (
+    <article className={`cap-card cap-small cap-${name}`}>
+      {wires}
+      <span className="cap-wire cap-wire-v" aria-hidden="true" />
+      <div className="cap-small-head">
+        <h3 className="cap-h cap-small-title">{group.title}</h3>
+        <Icon name={name} className="cap-icon-sm" />
       </div>
+      <List group={group} />
+    </article>
+  )
+}
 
-      {/* Bento Box Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 w-full max-w-6xl">
-        {/* Card 1: Tech Stack */}
-        <div className="col-span-1 row-span-2 bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-[#0A0A0A] dark:border-[#2A2A34] rounded-xl p-5 flex flex-col relative overflow-hidden shadow-[8px_8px_0px_0px_#0A0A0A] dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)] transition-transform hover:-translate-y-1">
-          <h3 className="text-4xl font-black text-[#0A0A0A] dark:text-white mb-3 tracking-tight">
-            Tech Stack
-          </h3>
-          <p className="text-lg lg:text-xl font-medium text-[#555555] dark:text-[#94A3B8] leading-snug">
-            C++ / Python / Java / JavaScript / React / Node.js / FastAPI / Git
-          </p>
-          <div className="mt-auto pt-2">
-            <div className="w-full max-w-[220px] aspect-[5/3] grid grid-cols-5 grid-rows-3 border-t border-l border-[#0A0A0A] dark:border-white/20">
-              {[...Array(15)].map((_, i) => (
-                <div key={i} className="border-b border-r border-[#0A0A0A] dark:border-white/20 flex items-center justify-center">
-                  {(i === 6 || i === 8) && (
-                    <div className="w-3 h-3 border-2 border-[#0A0A0A] dark:border-white bg-transparent"></div>
-                  )}
-                </div>
-              ))}
-            </div>
+export default function Capabilities() {
+  const { languages, tools, ai } = skills
+  return (
+    <section id="stack" className="cap-section relative z-10 w-full min-h-[100svh] flex flex-col justify-center pt-24 pb-14 px-6 md:px-10">
+      <SplitHeading solid="Core" hollow="Capabilities." className="justify-center text-center text-[clamp(48px,6vw,80px)]" />
+
+      <div className="cap-grid">
+        <article className="cap-card cap-languages">
+          <h3 className="cap-h cap-lang-title">{languages.title}</h3>
+          <ul className="cap-lang-list">
+            {languages.items.map((l) => <li key={l}>{l}</li>)}
+          </ul>
+          <div className="cap-tools">
+            <h3 className="cap-h cap-tools-title">{tools.title}</h3>
+            <List group={tools} />
           </div>
-        </div>
+        </article>
 
-        {/* Card 2: Multi-Agent AI Architecture */}
-        <div className="col-span-1 lg:col-span-2 row-span-1 bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-[#0A0A0A] dark:border-[#2A2A34] rounded-xl p-5 flex flex-col relative overflow-hidden shadow-[8px_8px_0px_0px_#0A0A0A] dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)] transition-transform hover:-translate-y-1">
-          <div className="flex flex-col md:flex-row gap-4 lg:gap-6 items-start">
-            <svg className="w-16 h-16 shrink-0 text-[#0A0A0A] dark:text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-              <circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M6.5 7.5l4 3M17.5 7.5l-4 3M6.5 16.5l4-3M17.5 16.5l-4-3M12 9v2M12 15v-2"/>
-            </svg>
-            <div>
-              <h3 className="text-xl lg:text-2xl font-black text-[#0A0A0A] dark:text-white mb-1 tracking-tight">
-                Multi-Agent AI Architecture
-              </h3>
-              <p className="text-sm font-medium text-[#555555] dark:text-[#94A3B8] leading-snug">
-                Orchestrating autonomous AI agents for complex, collaborative tasks with efficient consensus algorithms. Designed for scalability, fault tolerance, and dynamic problem solving using advanced vector retrieval and LangGraph.
-              </p>
-            </div>
+        <article className="cap-card cap-ai">
+          <span className="cap-wire cap-wire-in" aria-hidden="true" />
+          <Icon name="ai" className="cap-icon-lg" />
+          <div className="cap-ai-body">
+            <h3 className="cap-h cap-ai-title">{ai.title}</h3>
+            <p className="cap-list cap-ai-text">{emphasise(ai.text, ai.highlight)}</p>
           </div>
-        </div>
+        </article>
 
-        {/* Card 3: Full-Stack Web */}
-        <div className="col-span-1 row-span-1 bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-[#0A0A0A] dark:border-[#2A2A34] rounded-xl p-5 flex flex-col relative overflow-hidden shadow-[8px_8px_0px_0px_#0A0A0A] dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)] transition-transform hover:-translate-y-1">
-          <h3 className="text-3xl font-black text-[#0A0A0A] dark:text-white mb-2 tracking-tight">
-            Full-Stack Web
-          </h3>
-          <p className="text-sm font-medium text-[#555555] dark:text-[#94A3B8] leading-snug">
-            Frontend & Backend <br/> RESTful APIs & CORS <br/> Database Management
-          </p>
-        </div>
-
-        {/* Card 4: Autonomous Pipelines */}
-        <div className="col-span-1 row-span-1 bg-[#F4EFE6] dark:bg-[#080A17] border-2 border-[#0A0A0A] dark:border-[#2A2A34] rounded-xl p-5 flex flex-col relative overflow-hidden shadow-[8px_8px_0px_0px_#0A0A0A] dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)] transition-transform hover:-translate-y-1">
-          <h3 className="text-3xl font-black text-[#0A0A0A] dark:text-white mb-2 tracking-tight">
-            Autonomous Pipelines
-          </h3>
-          <p className="text-sm font-medium text-[#555555] dark:text-[#94A3B8] leading-snug">
-            Workflow Orchestration <br/> ETL & Data Ingestion <br/> CI/CD Integration
-          </p>
-          <svg className="absolute bottom-6 right-6 w-10 h-10 text-[#0A0A0A] dark:text-white/80 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </div>
+        <SmallCard name="frontend" wires={<span className="cap-wire cap-wire-h cap-wire-side" aria-hidden="true" />} />
+        <SmallCard name="backend" />
+        <SmallCard name="pipelines" />
       </div>
     </section>
-  );
+  )
 }
