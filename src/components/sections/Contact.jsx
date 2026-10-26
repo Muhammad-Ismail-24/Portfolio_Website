@@ -2,47 +2,38 @@ import { useEffect, useRef, useState } from 'react'
 import { EMAIL, GITHUB_URL, LINKEDIN_URL, isSet } from '../../data/site'
 
 /* ════════════════════════════════════════════════════════════════════════════
-   Contact — the heading, one line, and a ruled list of links. Values come from
+   Contact — the heading, one line, and a row of buttons (email, copy email,
+   LinkedIn, GitHub). Buttons carry names, not addresses. Values come from
    src/data/site.js; any that are still unset are hidden, never shown.
    ════════════════════════════════════════════════════════════════════════════ */
 
-const VALUE = 'ct-ulink text-[clamp(22px,4.2vw,40px)] font-bold tracking-tight leading-[1.15] break-words'
-// value + actions: the full line on phones (label above), the rest of the row from md up
-const GROUP = 'flex items-center min-w-0 basis-full md:basis-0 flex-1'
-const LABEL = 'w-full md:w-36 mb-2 md:mb-0 shrink-0 font-mono text-[11px] md:text-xs tracking-[0.18em] uppercase text-muted'
+const Arrow = () => <span aria-hidden="true" className="ct-arrow">↗</span>
 
-/** "https://www.linkedin.com/in/name/" → "linkedin.com/in/name" */
-const display = (url) => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
-
-/** lets long values wrap after @ . / instead of mid-word on phones */
-const breakable = (text) => text.split(/(?<=[@./])/).map((part, i) => <span key={i}>{i > 0 && <wbr />}{part}</span>)
-
-function Arrow() {
-  return <span aria-hidden="true" className="ct-arrow shrink-0 ml-4 text-2xl md:text-3xl font-bold text-ink">↗</span>
+/** copies via the Clipboard API, falling back to a hidden textarea */
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true } catch { /* try the legacy path */ }
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.setAttribute('readonly', '')
+  ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none'
+  document.body.appendChild(ta)
+  ta.select()
+  let ok = false
+  try { ok = document.execCommand('copy') } catch { /* ignore */ }
+  ta.remove()
+  return ok
 }
 
 export default function Contact() {
   const [copied, setCopied] = useState(false)
-  const emailRef = useRef(null)
   const timer = useRef(null)
   useEffect(() => () => clearTimeout(timer.current), [])
 
   const copy = async () => {
-    let ok = false
-    try { await navigator.clipboard.writeText(EMAIL); ok = true } catch { /* try the legacy path */ }
-    if (!ok && emailRef.current) {
-      const sel = window.getSelection()
-      const range = document.createRange()
-      range.selectNodeContents(emailRef.current)
-      sel.removeAllRanges()
-      sel.addRange(range)
-      try { ok = document.execCommand('copy') } catch { /* ignore */ }
-    }
-    if (ok) {
-      setCopied(true)
-      clearTimeout(timer.current)
-      timer.current = setTimeout(() => setCopied(false), 2000)
-    }
+    if (!(await copyText(EMAIL))) return
+    setCopied(true)
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => setCopied(false), 2000)
   }
 
   const links = [
@@ -60,37 +51,25 @@ export default function Contact() {
         </div>
         <p className="mt-5 text-lg lg:text-xl font-medium text-muted leading-snug">Have a project or a role in mind? Let&apos;s talk.</p>
 
-        <ul className="mt-12 lg:mt-16 m-0 p-0 list-none border-b border-ink">
+        <div className="mt-12 lg:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-5 lg:gap-6">
           {isSet(EMAIL) && (
-            <li className="ct-row flex flex-wrap md:flex-nowrap items-center py-6 md:py-8 border-t border-ink">
-              <span className={LABEL}>Email</span>
-              <span className={GROUP}>
-                <a ref={emailRef} href={`mailto:${EMAIL}`} className={`${VALUE} min-w-0 flex-1 outline-none`}>{breakable(EMAIL)}</a>
-                <button
-                  type="button"
-                  onClick={copy}
-                  aria-live="polite"
-                  className="ml-4 min-h-[44px] shrink-0 font-mono text-[11px] tracking-[0.14em] uppercase text-muted hover:text-ink transition-colors"
-                >
-                  {copied ? 'Copied ✓' : 'Copy'}
-                </button>
-                <Arrow />
-              </span>
-            </li>
+            <>
+              <a href={`mailto:${EMAIL}`} className="ct-btn ct-btn-primary lg:min-w-[220px]" aria-label={`Email me at ${EMAIL}`}>
+                Email me <Arrow />
+              </a>
+              <button type="button" onClick={copy} aria-live="polite" className="ct-btn lg:min-w-[220px]">
+                {copied ? 'Copied ✓' : 'Copy email'}
+                <span aria-hidden="true" className="font-mono text-sm font-medium text-muted">{copied ? '' : '⧉'}</span>
+              </button>
+            </>
           )}
           {links.map((l) => (
-            <li key={l.label} className="border-t border-ink">
-              <a href={l.href} target="_blank" rel="noreferrer" className="ct-row group flex flex-wrap md:flex-nowrap items-center py-6 md:py-8 outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4 focus-visible:ring-offset-canvas">
-                <span className={LABEL}>{l.label}</span>
-                <span className={GROUP}>
-                  <span className={`${VALUE} min-w-0 flex-1`}>{breakable(display(l.href))}</span>
-                  <Arrow />
-                </span>
-                <span className="sr-only">(opens in a new tab)</span>
-              </a>
-            </li>
+            <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="ct-btn lg:min-w-[220px]">
+              {l.label} <Arrow />
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
           ))}
-        </ul>
+        </div>
       </div>
     </section>
   )

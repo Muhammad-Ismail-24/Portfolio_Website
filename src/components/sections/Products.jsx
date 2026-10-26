@@ -13,18 +13,20 @@ import Phone from './os/Phone'
    The Terminal icon opens the site's hidden terminal; README explains the OS.
    Terminal: `launch drivefetch` (or `open shifa`) opens a window from anywhere.
 
-   Layout: the section is one viewport tall (100svh) with its content centred.
-   The monitor — bezel, chin and stand included — fits in what the heading
-   leaves, so nothing scrolls. The OS renders at real pixels (no scaling): the
-   screen is min(1100px, content width) wide and clamp(340, available, 640) tall.
+   Layout: the section is at least one viewport tall with its content centred.
+   The OS renders at real pixels (no scaling). The screen takes the height the
+   heading leaves, clamped to 480–640 so an open app window always has room
+   (short screens scroll a little rather than crush it), and is never wider
+   than 16:10 of that height, the content width or 1100px.
    Below 650px of viewport height the stand is a slim base. "Full screen" turns
    the screen into a fixed overlay above the nav. Under 768px a portrait phone
    (os/Phone.jsx) replaces it, filling the width up to 420px.
    ════════════════════════════════════════════════════════════════════════════ */
 
 const MAX_SCREEN_W = 1100
-const MIN_SCREEN_H = 340
+const MIN_SCREEN_H = 480
 const MAX_SCREEN_H = 640
+const MAX_ASPECT = 1.6     // screen width : height, at most 16:10
 const MAX_PHONE = 420
 const PHONE_FULL_W = 412 // outer width of the phone at scale 1 (390 screen + 2 × 11 bezel)
 
@@ -75,7 +77,7 @@ export default function Products() {
       const c = monitorChrome(slim)
       const avail = m.ih - NAV_CLEARANCE - PAD_BOTTOM - m.headH - GAP - chromeHeight(c)
       const screenH = Math.round(Math.min(MAX_SCREEN_H, Math.max(MIN_SCREEN_H, avail)))
-      const screenW = Math.round(Math.min(MAX_SCREEN_W, m.cw - 2 * c.bez))
+      const screenW = Math.round(Math.min(MAX_SCREEN_W, m.cw - 2 * c.bez, screenH * MAX_ASPECT))
       body = <Monitor screenW={screenW} screenH={screenH} slim={slim} reduced={reduced} booted={booted} full={full} onFullChange={setFull} />
     }
   }

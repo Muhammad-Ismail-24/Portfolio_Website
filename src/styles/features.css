@@ -290,17 +290,25 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
 @keyframes os-load { 0% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
 
 /* ── Contact ─────────────────────────────────────────────────── */
-/* underline slides in from the left on hover / focus */
-.ct-ulink {
-  background-image: linear-gradient(currentColor, currentColor);
-  background-repeat: no-repeat; background-position: 0 100%; background-size: 0% 2px;
-  transition: background-size 0.3s ease;
+/* chunky buttons in the capability-card style: lift and a longer shadow on hover / focus */
+.ct-btn {
+  --ct-shadow: var(--color-ink);
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 18px;
+  min-height: 60px; padding: 14px 22px;
+  border: 2px solid var(--color-ink); border-radius: 14px;
+  background: var(--card-bg); color: var(--color-ink);
+  font-size: clamp(18px, 1.6vw, 22px); font-weight: 700; letter-spacing: -0.02em; line-height: 1;
+  box-shadow: 6px 6px 0 0 var(--ct-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  outline: none;
 }
-.ct-ulink:hover, .ct-ulink:focus-visible { background-size: 100% 2px; }
-/* contact rows: the value's underline draws in and the arrow slides 4px on hover / focus */
+.dark .ct-btn { --ct-shadow: rgba(255, 255, 255, 0.18); }
+.ct-btn:hover, .ct-btn:focus-visible { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 0 var(--ct-shadow); }
+.ct-btn:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 4px; }
+/* the primary one is filled with ink */
+.ct-btn-primary { background: var(--color-ink); color: var(--color-canvas); }
 .ct-arrow { display: inline-block; transition: transform 0.25s ease; }
-.ct-row:hover .ct-ulink, .ct-row:focus-within .ct-ulink { background-size: 100% 2px; }
-.ct-row:hover .ct-arrow, .ct-row:focus-within .ct-arrow { transform: translateX(4px); }
+.ct-btn:hover .ct-arrow, .ct-btn:focus-visible .ct-arrow { transform: translate(2px, -2px); }
 
 /* ── What I offer ────────────────────────────────────────────── */
 /* four columns split by 2px ink rules: stacked on phones, 2×2 on tablet, 4-up from 1280 */
@@ -478,7 +486,9 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
 @media (prefers-reduced-motion: reduce) {
   .pn-core, .pn-orbit, .pn-pulse, .pn-callout, .pn-live-dot,
   .os-hint, .os-loadbar, .svc-art * { animation: none !important; }
-  .os-icon-li, .ct-ulink, .ct-arrow, .cap-card, .cap-icon { transition: none !important; }
+  .os-icon-li, .ct-btn, .ct-arrow, .cap-card, .cap-icon { transition: none !important; }
+  .ct-btn:hover, .ct-btn:focus-visible { transform: none; box-shadow: 6px 6px 0 0 var(--ct-shadow); }
+  .ct-btn:hover .ct-arrow, .ct-btn:focus-visible .ct-arrow { transform: none; }
   .cap-card:hover { transform: none; box-shadow: 8px 8px 0 0 var(--cap-shadow); }
   .cap-card:hover .cap-icon { transform: none; }
   .pn-pulse { display: none; }
