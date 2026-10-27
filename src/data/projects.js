@@ -5,64 +5,100 @@
  * The order here is the order of the network's spine: node 01 links to 02,
  * 02 to 03, and so on. ← / → in an open card hops along it.
  *
- * NOTE: these five entries were carried over unchanged from the previous
- * carousel. Swap in your real projects, screenshots and links before shipping.
- * `tags` only lists tech named in each description.
+ * Sourced from the LinkedIn Projects section. `demo` / `source` are null until
+ * a video or repo exists — the card buttons only render when a link is set.
+ * `image` is optional: drop a screenshot into public/assets/projects/ and point
+ * to it, otherwise the card shows "Preview coming soon".
+ * The network view has layout slots for 8 hubs (see HUBS_WIDE / HUBS_TALL in
+ * ProjectNetwork.jsx) — add a slot there before adding a ninth project.
  */
 export const projects = [
   {
-    id: 'sfml-engine',
-    title: 'SFML Game Engine',
-    blurb: '2D engine · ECS · level editor',
+    id: 'hollywood-archive',
+    title: 'Hollywood Archive',
+    blurb: 'B+ Tree database engine · C++',
     description:
-      'A lightweight 2D game engine built on top of SFML with an entity-component system, sprite batching, and a built-in level editor. Supports tilemaps, physics collisions, and particle effects out of the box.',
-    tags: ['C++', 'SFML', 'ECS'],
-    image: '/assets/projects/sfml-engine.png',
-    demo: '#',
-    source: '#',
+      'A custom database management system in C++ built around a self-balancing B+ Tree index, written without the STL using raw pointers and manual heap management. Handles node splitting and re-balancing, and chains the leaf nodes for fast forward and reverse range queries over Actor and Movie records.',
+    tags: ['C++', 'B+ Tree', 'Data Structures', 'No STL'],
+    image: '/assets/projects/hollywood-archive.png',
+    demo: null,
+    source: null,
   },
   {
-    id: 'neurachat',
-    title: 'NeuraChat',
-    blurb: 'Real-time chat · NLP pipeline',
+    id: 'suparco-ascii-3d',
+    title: 'SUPARCO ASCII 3D',
+    blurb: '3D-to-2D projection · 200 FPS',
     description:
-      'A real-time chat application powered by WebSockets and a custom NLP pipeline that auto-summarises conversations, extracts action items, and provides sentiment analysis on the fly.',
-    tags: ['WebSockets', 'NLP'],
-    image: '/assets/projects/neurachat.png',
-    demo: '#',
-    source: '#',
+      'A 3D satellite visualisation for SUPARCO and the BeiDou navigation system, rendered in a plain Windows console at 200 FPS. Uses perspective projection, a from-scratch integer Bresenham line renderer, and an ASCII z-buffer that varies character density to fake depth.',
+    tags: ['C++', 'Computer Graphics', 'Bresenham', 'Z-buffer'],
+    image: '/assets/projects/suparco-ascii-3d.png',
+    demo: null,
+    source: null,
   },
   {
-    id: 'cloudforge',
-    title: 'CloudForge CLI',
-    blurb: 'Multi-cloud provisioning CLI',
+    id: 'aracanum-editor',
+    title: 'Aracanum Editor',
+    blurb: 'Win32 word processor · zero STL',
     description:
-      'A developer-first CLI tool for provisioning and tearing down cloud infrastructure across AWS, GCP, and Azure with a single declarative YAML config. Includes drift detection and cost estimation.',
-    tags: ['CLI', 'AWS', 'GCP', 'Azure', 'YAML'],
-    image: '/assets/projects/cloudforge.png',
-    demo: '#',
-    source: '#',
+      'A real-time, multi-tabbed word processor built from scratch on the native Win32 GDI API. Features cascading pagination, pixel-accurate text justification, click-and-drag selection, clipboard support, search, and a rolling auto-save, all on manual memory management.',
+    tags: ['C++', 'Win32 API', 'GDI', 'OOP'],
+    image: '/assets/projects/aracanum-editor.png',
+    demo: null,
+    source: null,
   },
   {
-    id: 'pixelboard',
-    title: 'PixelBoard',
-    blurb: 'Collaborative pixel canvas · CRDTs',
+    id: 'wav-dsp-engine',
+    title: 'WAV DSP Engine',
+    blurb: 'Audio DSP · FFT · filters',
     description:
-      'A collaborative, real-time pixel art canvas inspired by r/place. Supports up to 10 000 concurrent users via CRDTs, with a replay timeline that lets you scrub through the entire canvas history.',
-    tags: ['CRDTs', 'Real-time'],
-    image: '/assets/projects/pixelboard.png',
-    demo: '#',
-    source: '#',
+      'A standalone digital signal processing engine for raw .wav files, with no STL or audio libraries. Parses the RIFF header, implements a Cooley-Tukey radix-2 FFT and its inverse, and applies low-pass, high-pass and band-pass filters through an 8-slot interactive CLI.',
+    tags: ['C++', 'DSP', 'FFT', 'CLI'],
+    image: '/assets/projects/wav-dsp-engine.png',
+    demo: null,
+    source: null,
   },
   {
-    id: 'medvault',
-    title: 'MedVault',
-    blurb: 'Encrypted records vault · AI search',
+    id: 'tumblepop',
+    title: 'Tumblepop',
+    blurb: '2D SFML physics arcade platformer',
     description:
-      'A HIPAA-compliant medical records vault with end-to-end encryption, role-based access control, and an AI-assisted search that surfaces relevant patient history across millions of documents.',
-    tags: ['E2E encryption', 'RBAC', 'AI search'],
-    image: '/assets/projects/medvault.png',
-    demo: '#',
-    source: '#',
+      'A 2D arcade platformer in C++ and SFML with a custom game loop, AABB collision physics and sprite-sheet animation instead of a prebuilt engine. Includes four enemy classes with their own AI state machines, procedurally generated levels, and a combo and power-up progression system.',
+    tags: ['C++', 'SFML', 'Game Dev', 'Physics', 'AI'],
+    image: '/assets/projects/tumblepop.png',
+    demo: null,
+    source: null,
+  },
+  {
+    id: 'g-loc-cryptosystem',
+    title: 'G-LOC Cryptosystem',
+    blurb: 'RSA-style keypairs · stream decryption',
+    description:
+      'An asymmetric public/private keypair cryptosystem in C++ inspired by RSA. Seeds primes from 64-bit entropy masks, computes Euler totients and modular inverses from scratch, and runs a vectorised encrypt/decrypt pipeline over raw byte streams.',
+    tags: ['C++', 'Cryptography', 'Modular arithmetic'],
+    image: '/assets/projects/g-loc-cryptosystem.png',
+    demo: null,
+    source: null,
+  },
+  {
+    id: 'nasa-image-terminal',
+    title: 'NASA Image Terminal',
+    blurb: 'Convolution filters · TrueColor ANSI',
+    description:
+      'A terminal-based image processing engine that works on raw 64×64×3 pixel matrices. Implements Gaussian blur and Laplacian sharpening via 2D convolution, brightness and contrast clamping, rotation, and 24-bit ANSI TrueColor output straight to the console.',
+    tags: ['C++', 'Image Processing', 'Convolution', 'ANSI'],
+    image: '/assets/projects/nasa-image-terminal.png',
+    demo: null,
+    source: null,
+  },
+  {
+    id: 'triple-b',
+    title: 'Triple B',
+    blurb: 'Bubble Bomber · terminal arcade',
+    description:
+      'A real-time arcade game that runs entirely in the Linux terminal using low-level C++ I/O (unistd.h, termios.h) and no graphics libraries. Features non-blocking input, flicker-free in-place rendering, ball-and-brick collision physics, and live score and ammo tracking.',
+    tags: ['C++', 'Linux', 'termios', 'Game Dev'],
+    image: '/assets/projects/triple-b.png',
+    demo: null,
+    source: null,
   },
 ];

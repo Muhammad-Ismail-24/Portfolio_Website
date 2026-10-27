@@ -23,11 +23,14 @@ import ProjectCards from './ProjectCards'
 
 // Hub layout (0–1 of the stage) and which side each label sits on.
 // Landscape and portrait variants.
+// (8 slots: the spine snakes left → right across the top, then back right → left)
 const HUBS_WIDE = [
-  [0.12, 0.34, 'right'], [0.32, 0.72, 'right'], [0.52, 0.27, 'right'], [0.7, 0.72, 'right'], [0.88, 0.44, 'left'],
+  [0.07, 0.2, 'right'], [0.29, 0.36, 'right'], [0.51, 0.2, 'right'], [0.73, 0.36, 'right'],
+  [0.73, 0.74, 'right'], [0.51, 0.88, 'right'], [0.29, 0.72, 'right'], [0.07, 0.86, 'right'],
 ]
 const HUBS_TALL = [
-  [0.26, 0.1, 'below'], [0.72, 0.27, 'below'], [0.28, 0.46, 'below'], [0.72, 0.64, 'below'], [0.3, 0.84, 'below'],
+  [0.26, 0.06, 'below'], [0.72, 0.175, 'below'], [0.26, 0.29, 'below'], [0.72, 0.405, 'below'],
+  [0.26, 0.52, 'below'], [0.72, 0.635, 'below'], [0.26, 0.75, 'below'], [0.72, 0.865, 'below'],
 ]
 
 function mulberry32(seed) {
@@ -650,14 +653,20 @@ function ProjectCard({ index, box, tall, sheet, reduced, onClose, onPrev, onNext
           ))}
         </ul>
 
-        <div className={`gap-3 pt-1 ${sheet ? 'grid grid-cols-2' : 'flex flex-wrap'}`}>
-          <a href={p.demo} className="inline-flex items-center justify-center gap-2 px-5 min-h-[48px] bg-ink text-canvas border-2 border-ink font-semibold text-sm hover:opacity-80 transition-opacity">
-            Video Demo <span aria-hidden="true">→</span>
-          </a>
-          <a href={p.source} className="inline-flex items-center justify-center gap-2 px-5 min-h-[48px] border-2 border-ink text-ink font-semibold text-sm hover:bg-ink hover:text-canvas transition-colors">
-            Source
-          </a>
-        </div>
+        {(p.demo || p.source) && (
+          <div className={`gap-3 pt-1 ${sheet ? 'grid grid-cols-2' : 'flex flex-wrap'}`}>
+            {p.demo && (
+              <a href={p.demo} className="inline-flex items-center justify-center gap-2 px-5 min-h-[48px] bg-ink text-canvas border-2 border-ink font-semibold text-sm hover:opacity-80 transition-opacity">
+                Video Demo <span aria-hidden="true">→</span>
+              </a>
+            )}
+            {p.source && (
+              <a href={p.source} className="inline-flex items-center justify-center gap-2 px-5 min-h-[48px] border-2 border-ink text-ink font-semibold text-sm hover:bg-ink hover:text-canvas transition-colors">
+                Source
+              </a>
+            )}
+          </div>
+        )}
 
         {/* hop along the spine */}
         <div className="flex items-center justify-between pt-3 mt-1 border-t border-ink/20">
