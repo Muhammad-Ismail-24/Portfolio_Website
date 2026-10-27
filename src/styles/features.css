@@ -495,3 +495,12 @@ html.dark[data-mesh-power] .neuromesh-bg { opacity: 0.26 !important; }
   .pn-edge, .pn-node, .pn-hubglyph, .pn-label, .pn-packet, .pn-callout, .spotlight-name { transition: none !important; }
   .pn-callout { transform: translate(-50%, 0); }
 }
+
+/* ── About entrance ──────────────────────────────────────────
+   "Learning Fast." outline: same stroke as .text-hollow (2px light, 1.5px dark). */
+.about-outline { fill: none; stroke: var(--color-ink); stroke-width: 2px; }
+.dark .about-outline { stroke-width: 1.5px; }
+.about-caret { transition: opacity 0.3s ease; }
+.about-caret.is-blink { animation: about-caret 1s steps(1, end) infinite; }
+.about-caret.is-fade { opacity: 0; }
+@keyframes about-caret { 50% { opacity: 0; } }
