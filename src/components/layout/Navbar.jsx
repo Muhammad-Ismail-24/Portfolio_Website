@@ -13,10 +13,11 @@ import ThemeToggle from '../ui/ThemeToggle'
  * Both highlight the section you're reading.
  */
 
-const PILL = ['Portfolio', 'About', 'Stack', 'Services', 'Contact']
 // mobile menu: every section, in page order → [label, id]
-const MENU = [['About', 'about'], ['Portfolio', 'portfolio'], ['Projects', 'projects'], ['Stack', 'stack'], ['Services', 'services'], ['Contact', 'contact']]
+const MENU = [['About', 'about'], ['Portfolio', 'portfolio'], ['Projects', 'projects'], ['Capabilities', 'stack'], ['Services', 'services'], ['Contact', 'contact']]
 const ORDER = MENU.map(([, id]) => id)
+// pill: the same order, minus Projects (it sits under Portfolio)
+const PILL = MENU.filter(([, id]) => id !== 'projects')
 
 const BAR = 'border border-[var(--color-nav-border)] bg-[var(--color-nav-bg)] backdrop-blur-md shadow-lg shadow-black/[0.03] dark:shadow-black/[0.2] dark:bg-[#162032]/70 dark:border-white/10 dark:text-white'
 
@@ -29,12 +30,11 @@ export default function Navbar() {
       {/* ── md+: the pill ─────────────────────────── */}
       <nav aria-label="Sections" className="hidden md:block fixed top-5 left-1/2 -translate-x-1/2 z-50">
         <div className={`flex items-center gap-1 px-2 py-2 rounded-full ${BAR}`}>
-          {PILL.map((link) => {
-            const id = link.toLowerCase()
+          {PILL.map(([link, id]) => {
             const on = active === id
             return (
               <a
-                key={link}
+                key={id}
                 href={`#${id}`}
                 onClick={(e) => scrollToSection(e, id)}
                 aria-current={on ? 'true' : undefined}

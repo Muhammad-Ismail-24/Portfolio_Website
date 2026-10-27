@@ -164,7 +164,7 @@ export default function About() {
 
   return (
     <section ref={sectionRef} id="about" className="relative z-10 w-full min-h-[100svh] flex items-center overflow-x-clip px-6 md:px-16 lg:px-24 pt-24 pb-16 lg:py-20">
-      <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center lg:items-stretch">
 
         {/* Left Column: Typography & Buttons */}
         <div>
@@ -191,10 +191,11 @@ export default function About() {
           </div>
         </div>
 
-        {/* Right Column: photo in a frame that draws itself */}
+        {/* Right Column: photo in a frame that draws itself.
+            On lg the frame is exactly as tall as the text column; the caption hangs below it. */}
         <div>
-          <div className="w-fit mx-auto lg:ml-auto lg:mr-0">
-            <div className={`relative p-2 border-2 ${frameFinal ? 'border-[#0A0A0A] dark:border-white/40' : 'border-transparent'} w-fit mx-auto lg:ml-auto lg:mr-0`}>
+          <div className="w-fit mx-auto lg:ml-auto lg:mr-0 lg:relative lg:h-full">
+            <div className={`relative p-2 border-2 ${frameFinal ? 'border-[#0A0A0A] dark:border-white/40' : 'border-transparent'} w-fit mx-auto lg:ml-auto lg:mr-0 lg:h-full`}>
               {!frameFinal && (
                 // Covers the border box; a 4px stroke centred on its edge leaves the inner 2px visible.
                 <svg aria-hidden="true" className="absolute -top-[2px] -left-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] overflow-hidden pointer-events-none text-[#0A0A0A] dark:text-white/40">
@@ -208,6 +209,7 @@ export default function About() {
                 </svg>
               )}
               <motion.div
+                className="lg:relative lg:h-full lg:w-[min(28vw,420px)]"
                 initial={reduced ? false : { opacity: 0, y: 8 }}
                 animate={reduced || play ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
                 transition={{ duration: 0.4, ease: 'easeOut', delay: T.photo / 1000 }}
@@ -215,11 +217,13 @@ export default function About() {
                 <img
                   src="/assets/profile.jpeg"
                   alt="Muhammad Ismail"
-                  className="w-[min(78vw,340px)] sm:w-[400px] lg:w-[min(34vw,500px)] aspect-[3/4] object-cover object-top grayscale-0 hover:grayscale transition-all duration-500"
+                  className="w-[min(78vw,340px)] sm:w-[400px] aspect-[3/4] lg:w-full lg:h-full lg:aspect-auto lg:absolute lg:inset-0 object-cover object-top grayscale-0 hover:grayscale transition-all duration-500"
                 />
               </motion.div>
             </div>
-            <TypedCaption play={play} reduced={reduced} />
+            <div className="lg:absolute lg:top-full lg:left-0 lg:w-full">
+              <TypedCaption play={play} reduced={reduced} />
+            </div>
           </div>
         </div>
 
