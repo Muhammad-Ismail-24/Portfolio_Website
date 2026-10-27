@@ -383,7 +383,7 @@ function BrowserBody({ product, compact, nonce, reduced, onReload }) {
           <LockIcon />
           <AddressText product={product} />
         </div>
-        <a href={product.live} className="inline-flex items-center h-8 px-3 ml-1 border-2 border-ink text-xs font-semibold text-ink hover:bg-ink hover:text-canvas transition-colors whitespace-nowrap">
+        <a href={product.live} target="_blank" rel="noopener noreferrer" className="inline-flex items-center h-8 px-3 ml-1 border-2 border-ink text-xs font-semibold text-ink hover:bg-ink hover:text-canvas transition-colors whitespace-nowrap">
           Open ↗
         </a>
         {loading && <span key={nonce} className="os-loadbar absolute left-0 -bottom-[2px] h-[3px] bg-ink" aria-hidden="true" />}

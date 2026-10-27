@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SITE_HOST } from '../../../data/products'
+import ProjectMedia from '../../ui/ProjectMedia'
 
 /* Shared pieces of portfolio-os: used by the monitor (desktop) and the phone. */
 
@@ -83,7 +84,6 @@ export const ReloadPath = () => <path d="M11.5 6.5A4.5 4.5 0 1 1 9.8 3M11.5 1.5V
 
 /** The product's page (name, copy, buttons, screenshot). Scrolls inside its own box. */
 export function ProductPage({ product, nonce, loading, reduced, compact }) {
-  const [imgOk, setImgOk] = useState(true)
   return (
     <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain" data-lenis-prevent>
       <motion.div
@@ -106,22 +106,20 @@ export function ProductPage({ product, nonce, loading, reduced, compact }) {
             </ul>
           )}
           <div className="mt-7 flex flex-wrap gap-3">
-            <a href={product.live} className="inline-flex items-center gap-2 px-5 min-h-[44px] bg-ink text-canvas border-2 border-ink font-semibold text-sm hover:opacity-80 transition-opacity">
+            <a href={product.live} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 min-h-[44px] bg-ink text-canvas border-2 border-ink font-semibold text-sm hover:opacity-80 transition-opacity">
               Live Deployment <span aria-hidden="true">→</span>
             </a>
-            <a href={product.demo} className="inline-flex items-center px-5 min-h-[44px] border-2 border-ink text-ink font-semibold text-sm hover:bg-ink hover:text-canvas transition-colors">
-              Video Demo
-            </a>
+            {product.demo && (
+              <a href={product.demo} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-5 min-h-[44px] border-2 border-ink text-ink font-semibold text-sm hover:bg-ink hover:text-canvas transition-colors">
+                Video Demo
+              </a>
+            )}
           </div>
         </div>
 
+        {/* gallery + optional inline video; key resets it when a different product opens */}
         <div className="pn-preview relative w-full aspect-[16/10] rounded-lg overflow-hidden border border-ink/25">
-          {imgOk && <img src={product.image} alt={`${product.word1}${product.word2} screenshot`} className="absolute inset-0 w-full h-full object-cover" onError={() => setImgOk(false)} />}
-          {!imgOk && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted bg-[var(--card-bg)] px-3 py-1 border border-ink/30">Screenshot coming soon</span>
-            </div>
-          )}
+          <ProjectMedia key={product.id} project={{ title: `${product.word1}${product.word2}`, images: product.images, video: product.video }} />
         </div>
       </motion.div>
     </div>
@@ -146,12 +144,12 @@ export function Glyph({ name, small, size }) {
   const s = size ?? (small ? 16 : 30)
   const common = { width: s, height: s, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: small ? 2 : 1.6, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }
   switch (name) {
-    case 'search': // folder + magnifier
-      return <svg {...common}><path d="M2.5 6.5V18a1.5 1.5 0 0 0 1.5 1.5h7M2.5 6.5V5A1.5 1.5 0 0 1 4 3.5h4.5l2 2.5H20A1.5 1.5 0 0 1 21.5 7.5V10" /><circle cx="16.5" cy="15.5" r="3.5" /><path d="M19 18l2.5 2.5" /></svg>
+    case 'car': // side-on car
+      return <svg {...common}><path d="M3 16.5v-3.4a1.5 1.5 0 0 1 .4-1l2-4.3A2 2 0 0 1 7.2 6.7h6.4a2 2 0 0 1 1.5.7l2.4 3 2.3.6a1.5 1.5 0 0 1 1.2 1.5v4" /><circle cx="7.5" cy="17" r="2" /><circle cx="16.5" cy="17" r="2" /><path d="M3 16.5h2M9.5 17h5M18.5 16.5h2.5M7 11h8" /></svg>
     case 'pulse': // heart-rate line in a rounded square
       return <svg {...common}><rect x="2.5" y="3.5" width="19" height="17" rx="3" /><path d="M5.5 12.5h3l2-4 3 8 2-4h3" /></svg>
-    case 'sync': // branches syncing
-      return <svg {...common}><circle cx="6" cy="5" r="2" /><circle cx="6" cy="19" r="2" /><circle cx="18" cy="12" r="2" /><path d="M6 7v10M6 9c0 3 4 3 10 3M18 14c0 3-4 5-10 5" /></svg>
+    case 'agent': // robot head with antenna
+      return <svg {...common}><rect x="4" y="8.5" width="16" height="11" rx="3" /><path d="M12 8.5V5M10 5h4" /><circle cx="9" cy="13.5" r="1.1" /><circle cx="15" cy="13.5" r="1.1" /><path d="M9.5 17h5M2 13v3M22 13v3" /></svg>
     case 'terminal':
       return <svg {...common}><rect x="2.5" y="4" width="19" height="16" rx="1.5" /><path d="M6.5 9.5l3 2.5-3 2.5M12 15h5" /></svg>
     case 'note':
