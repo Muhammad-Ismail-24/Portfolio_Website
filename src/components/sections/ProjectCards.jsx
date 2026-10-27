@@ -152,12 +152,14 @@ function Card({ project, index, total, cardRef, nextRef, reduced, onOpenInNetwor
           >
             View in network ↗
           </button>
-          <a
-            href={project.demo}
-            className="shrink-0 whitespace-nowrap px-5 sm:px-6 py-2.5 bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] font-bold text-sm rounded-full flex items-center gap-2 hover:scale-105 transition-transform"
-          >
-            Video Demo →
-          </a>
+          {project.demo && (
+            <a
+              href={project.demo}
+              className="shrink-0 whitespace-nowrap px-5 sm:px-6 py-2.5 bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] font-bold text-sm rounded-full flex items-center gap-2 hover:scale-105 transition-transform"
+            >
+              Video Demo →
+            </a>
+          )}
         </div>
       </div>
     </motion.li>
