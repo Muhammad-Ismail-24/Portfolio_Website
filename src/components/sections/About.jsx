@@ -163,7 +163,7 @@ export default function About() {
   });
 
   return (
-    <section ref={sectionRef} id="about" className="relative z-10 w-full min-h-[100svh] lg:h-screen flex items-center overflow-x-clip px-6 md:px-16 lg:px-24 pt-24 pb-16 lg:py-20">
+    <section ref={sectionRef} id="about" className="relative z-10 w-full min-h-[100svh] flex items-center overflow-x-clip px-6 md:px-16 lg:px-24 pt-24 pb-16 lg:py-20">
       <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
 
         {/* Left Column: Typography & Buttons */}
@@ -215,7 +215,7 @@ export default function About() {
                 <img
                   src="/assets/profile.jpeg"
                   alt="Muhammad Ismail"
-                  className="w-[min(78vw,340px)] sm:w-[400px] lg:w-[min(36vw,540px)] max-h-[68vh] aspect-square object-cover grayscale-0 hover:grayscale transition-all duration-500"
+                  className="w-[min(78vw,340px)] sm:w-[400px] lg:w-[min(34vw,500px)] aspect-[3/4] object-cover object-top grayscale-0 hover:grayscale transition-all duration-500"
                 />
               </motion.div>
             </div>
