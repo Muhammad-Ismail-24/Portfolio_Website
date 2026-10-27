@@ -9,6 +9,10 @@ import { EMAIL, GITHUB_URL, LINKEDIN_URL, isSet } from '../../data/site'
 
 const Arrow = () => <span aria-hidden="true" className="ct-arrow">↗</span>
 
+/** Gmail's web compose window, addressed to me. A plain mailto: does nothing without a desktop mail app. */
+const gmailCompose = (to) =>
+  `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent('Hello from your portfolio')}`
+
 /** copies via the Clipboard API, falling back to a hidden textarea */
 async function copyText(text) {
   try { await navigator.clipboard.writeText(text); return true } catch { /* try the legacy path */ }
@@ -54,8 +58,9 @@ export default function Contact() {
         <div className="mt-12 lg:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-5 lg:gap-6">
           {isSet(EMAIL) && (
             <>
-              <a href={`mailto:${EMAIL}`} className="ct-btn ct-btn-primary lg:min-w-[220px]" aria-label={`Email me at ${EMAIL}`}>
+              <a href={gmailCompose(EMAIL)} target="_blank" rel="noreferrer" className="ct-btn ct-btn-primary lg:min-w-[220px]" aria-label={`Email me at ${EMAIL}`}>
                 Email me <Arrow />
+                <span className="sr-only">(opens Gmail in a new tab)</span>
               </a>
               <button type="button" onClick={copy} aria-live="polite" className="ct-btn lg:min-w-[220px]">
                 {copied ? 'Copied ✓' : 'Copy email'}
