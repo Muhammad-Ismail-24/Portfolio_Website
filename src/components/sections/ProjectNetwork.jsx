@@ -4,6 +4,7 @@ import { AnimatePresence, animate, motion, useDragControls, useMotionValue } fro
 import { projects } from '../../data/projects'
 import { EVENTS, on, prefersReducedMotion, scrollToId } from '../../utils/bus'
 import SplitHeading from '../ui/SplitHeading'
+import ProjectMedia from '../ui/ProjectMedia'
 import ProjectCards from './ProjectCards'
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -127,7 +128,7 @@ function cameraFor(graph, w, h) {
 }
 function cardBox(graph, w, h) {
   if (graph.tall) return { left: w * 0.04, top: h * 0.38, width: w * 0.92 }
-  const width = Math.min(520, w * 0.48)
+  const width = Math.min(660, w * 0.54)
   return { left: w - w * 0.035 - width, top: null, width }
 }
 
@@ -587,7 +588,6 @@ function HubGlyph({ index, active, selected }) {
 function ProjectCard({ index, box, tall, sheet, reduced, onClose, onPrev, onNext }) {
   const p = projects[index]
   const headRef = useRef(null)
-  const [imgOk, setImgOk] = useState(true)
   const origin = tall ? '50% 0%' : '0% 50%'
   const drag = useDragControls()
 
@@ -623,17 +623,8 @@ function ProjectCard({ index, box, tall, sheet, reduced, onClose, onPrev, onNext
 
       <div className={`p-5 flex flex-col gap-3.5 ${sheet ? 'pb-[max(20px,env(safe-area-inset-bottom))]' : ''}`}>
         {/* preview */}
-        <div className="pn-preview relative w-full aspect-[16/7] max-h-[22vh] rounded-lg overflow-hidden border border-ink/20">
-          {imgOk && (
-            <img src={p.image} alt={`${p.title} screenshot`} className="absolute inset-0 w-full h-full object-cover" onError={() => setImgOk(false)} />
-          )}
-          {!imgOk && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-mono text-xs tracking-[0.2em] uppercase text-muted bg-[#F4EFE6] dark:bg-[#080A17] px-3 py-1 border border-ink/30">
-                Preview coming soon
-              </span>
-            </div>
-          )}
+        <div className="pn-preview relative w-full aspect-[16/9] max-h-[40vh] rounded-lg overflow-hidden border border-ink/20 shrink-0">
+          <ProjectMedia project={p} />
         </div>
 
         <h3

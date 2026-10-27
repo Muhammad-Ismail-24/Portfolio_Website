@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { projects } from '../../data/projects'
 import { scrollToY } from '../../utils/bus'
+import ProjectMedia from '../ui/ProjectMedia'
 
 /* ─────────────────────────────────────────────
    ProjectCards — the "Cards" view of the Featured Projects section.
@@ -96,7 +97,6 @@ export default function ProjectCards({ onOpenInNetwork }) {
 
 function Card({ project, index, total, cardRef, nextRef, reduced, onOpenInNetwork }) {
   const [h, setH] = useState(0)
-  const [imgOk, setImgOk] = useState(true)
   const top = stuckTop(index)
 
   useLayoutEffect(() => {
@@ -125,15 +125,9 @@ function Card({ project, index, total, cardRef, nextRef, reduced, onOpenInNetwor
 
       {/* Image */}
       <div
-        className={`relative w-full md:w-[45%] shrink-0 aspect-[16/10] rounded-xl overflow-hidden border border-black/10 dark:border-white/10 ${imgOk ? 'bg-[#0A0A0A]' : 'pn-preview'}`}
+        className="pn-preview relative w-full md:w-[45%] shrink-0 aspect-[16/10] rounded-xl overflow-hidden border border-black/10 dark:border-white/10"
       >
-        {imgOk ? (
-          <img src={project.image} alt="" className="absolute inset-0 w-full h-full object-cover" draggable={false} onError={() => setImgOk(false)} />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted bg-[var(--card-bg)] px-3 py-1 border border-ink/30">Preview coming soon</span>
-          </div>
-        )}
+        <ProjectMedia project={project} />
       </div>
 
       {/* Text */}
