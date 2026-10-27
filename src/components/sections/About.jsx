@@ -217,7 +217,7 @@ export default function About() {
                 <img
                   src="/assets/profile.jpeg"
                   alt="Muhammad Ismail"
-                  className="w-[min(78vw,340px)] sm:w-[400px] aspect-[3/4] lg:w-full lg:h-full lg:aspect-auto lg:absolute lg:inset-0 object-cover object-top grayscale-0 hover:grayscale transition-all duration-500"
+                  className="w-[min(78vw,340px)] sm:w-[400px] aspect-[3/4] lg:w-full lg:h-full lg:aspect-auto lg:absolute lg:inset-0 object-cover object-top lg:object-bottom grayscale-0 hover:grayscale transition-all duration-500"
                 />
               </motion.div>
             </div>
