@@ -11,15 +11,17 @@ import ProjectNetwork from './components/sections/ProjectNetwork';
 import Capabilities from './components/sections/Capabilities';
 import Services from './components/sections/Services';
 import Contact from './components/sections/Contact';
+import { useTheme } from './hooks/useTheme';
 
 // the three.js background loads in its own chunk, after the page has painted
 const StaticNeuromesh = lazy(() => import('./components/layout/StaticNeuromesh'));
 
 export default function App() {
+  const { isDark } = useTheme();
   return (
     <ReactLenis root options={{ lerp: 0.1, smoothWheel: true, wheelMultiplier: 1.2 }}>
       <Layout>
-        <Suspense fallback={null}><StaticNeuromesh/></Suspense>
+        <Suspense fallback={null}><StaticNeuromesh isDarkMode={isDark} /></Suspense>
         <Navbar/>
         <Hero/>
         <About/>

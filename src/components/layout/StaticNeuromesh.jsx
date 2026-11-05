@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useTheme } from '../../hooks/useTheme'
 
 /* ════════════════════════════════════════════════════════════════════════════
    StaticNeuromesh — the original diagonal mesh, scaled to fit, twisting on scroll
@@ -43,8 +44,8 @@ const LINE_WIDTH = 1.25
 const MAX_DIST = 350      // original connection rule (in original SVG units)
 
 const COLORS = {
-  light: { stroke: '#1A1A1A', fill: '#F5F3EC' },
-  dark: { stroke: '#FFFFFF', fill: '#111111' },
+  light: { stroke: '#0A0A0A', fill: '#F5F3EC', lineOpacity: 0.15, nodeOpacity: 0.4 },
+  dark: { stroke: '#FFFFFF', fill: '#0A0F1E', lineOpacity: 0.3, nodeOpacity: 0.6 },
 }
 
 // ─── Fit — how the mesh is scaled to the screen ─────────────────────────────
@@ -165,12 +166,13 @@ const EDGE_VERT = /* glsl */ `
 
 const EDGE_FRAG = /* glsl */ `
   uniform vec3 uColor;
+  uniform float uOpacity;
   varying float vAcross;
   varying float vHalf;
   varying float vAlpha;
 
   void main() {
-    float a = (1.0 - smoothstep(vHalf - 0.5, vHalf + 0.5, abs(vAcross))) * vAlpha;
+    float a = (1.0 - smoothstep(vHalf - 0.5, vHalf + 0.5, abs(vAcross))) * vAlpha * uOpacity;
     if (a < 0.003) discard;
     gl_FragColor = vec4(uColor, a);
   }
@@ -208,6 +210,7 @@ const NODE_VERT = /* glsl */ `
 const NODE_FRAG = /* glsl */ `
   uniform vec3 uStrokeColor;
   uniform vec3 uFillColor;
+  uniform float uOpacity;
   varying float vR;
   varying float vHs;
   varying float vSize;
@@ -220,7 +223,7 @@ const NODE_FRAG = /* glsl */ `
     float aa = 0.75;
     float ring = 1.0 - smoothstep(vHs - aa, vHs + aa, abs(d - vR));
     float fill = 1.0 - smoothstep(vR - aa, vR + aa, d);
-    float a = max(ring, fill) * vVis;
+    float a = max(ring, fill) * vVis * uOpacity;
     if (a < 0.003) discard;
     vec3 col = mix(mix(uFillColor, uStrokeColor, ring), uStrokeColor, vLit);
     gl_FragColor = vec4(col, a);
@@ -368,6 +371,7 @@ function createScene() {
       uRes: { value: new THREE.Vector2(1, 1) },
       uWidth: { value: LINE_WIDTH },
       uColor: { value: hexToVec3(COLORS.light.stroke) },
+      uOpacity: { value: COLORS.light.lineOpacity },
     },
   })
   const nodeMat = new THREE.ShaderMaterial({
@@ -383,6 +387,7 @@ function createScene() {
       uStroke: { value: NODE_STROKE },
       uStrokeColor: { value: hexToVec3(COLORS.light.stroke) },
       uFillColor: { value: hexToVec3(COLORS.light.fill) },
+      uOpacity: { value: COLORS.light.nodeOpacity },
     },
   })
 
@@ -530,26 +535,34 @@ function createScene() {
 }
 
 // ─── Dark-mode watcher (same `dark` class the rest of the site uses) ────────
-function useIsDark() {
-  const [isDark, setIsDark] = useState(
+// ─── Dark-mode watcher (supports prop, useTheme store, and html class) ────────
+function useIsDark(propIsDarkMode) {
+  const themeContext = useTheme?.()
+  const [isDarkState, setIsDarkState] = useState(
     () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   )
   useEffect(() => {
     const root = document.documentElement
-    const obs = new MutationObserver(() => setIsDark(root.classList.contains('dark')))
+    const obs = new MutationObserver(() => setIsDarkState(root.classList.contains('dark')))
     obs.observe(root, { attributes: true, attributeFilter: ['class'] })
     return () => obs.disconnect()
   }, [])
-  return isDark
+
+  if (propIsDarkMode !== undefined) return Boolean(propIsDarkMode)
+  if (themeContext?.isDark !== undefined) return Boolean(themeContext.isDark)
+  return isDarkState
 }
+
+
 
 // Clicks on these never drop a node
 const NO_NODE = 'a, button, input, textarea, select, label, summary, [role="button"], [role="dialog"], .pn-stage, .os-mon, [data-no-node]'
 
 // ─── Scene ──────────────────────────────────────────────────────────────────
-function NeuromeshScene() {
+function NeuromeshScene({ isDarkMode: propIsDark } = {}) {
   const { invalidate } = useThree()
-  const isDark = useIsDark()
+  const isDarkMode = useIsDark(propIsDark)
+  const isDark = isDarkMode
   const scene = useMemo(createScene, [])
   const groupRef = useRef()
 
@@ -608,11 +621,18 @@ function NeuromeshScene() {
 
   // Theme colours (+ the power-on wave on every switch after the first paint)
   useEffect(() => {
-    const c = isDark ? COLORS.dark : COLORS.light
-    const stroke = hexToVec3(c.stroke)
+    const strokeHex = isDarkMode ? '#FFFFFF' : '#0A0A0A'
+    const fillHex = isDarkMode ? '#0A0F1E' : '#F5F3EC'
+    const lineOpacity = isDarkMode ? 0.3 : 0.15
+    const nodeOpacity = isDarkMode ? 0.6 : 0.4
+    const stroke = hexToVec3(strokeHex)
     scene.edgeMat.uniforms.uColor.value.copy(stroke)
+    scene.edgeMat.uniforms.uOpacity.value = lineOpacity
+    scene.edgeMat.opacity = lineOpacity
     scene.nodeMat.uniforms.uStrokeColor.value.copy(stroke)
-    scene.nodeMat.uniforms.uFillColor.value.copy(hexToVec3(c.fill))
+    scene.nodeMat.uniforms.uFillColor.value.copy(hexToVec3(fillHex))
+    scene.nodeMat.uniforms.uOpacity.value = nodeOpacity
+    scene.nodeMat.opacity = nodeOpacity
     let t = 0
     if (firstTheme.current) firstTheme.current = false
     else if (!prefersReducedMotion()) {
@@ -624,7 +644,7 @@ function NeuromeshScene() {
     }
     invalidate()
     return () => clearTimeout(t)
-  }, [isDark, scene, invalidate])
+  }, [isDarkMode, scene, invalidate])
 
   // client px → mesh-local units (undo the screen fit, the turn and the scale)
   const toLocal = (cx, cy) => {
@@ -674,7 +694,7 @@ function NeuromeshScene() {
     fit.current = { W, H, px: pxPerUnit, s: fitScale, turn }
 
     scene.edgeMat.uniforms.uRes.value.set(W, H)
-    scene.edgeMat.uniforms.uWidth.value = LINE_WIDTH * pxPerUnit
+    scene.edgeMat.uniforms.uWidth.value = (isDarkMode ? 1.6 : LINE_WIDTH) * pxPerUnit
     scene.nodeMat.uniforms.uScale.value = pxPerUnit
     scene.nodeMat.uniforms.uPxRatio.value = state.gl.getPixelRatio()
 
@@ -703,18 +723,35 @@ function NeuromeshScene() {
 
   return (
     <group ref={groupRef}>
-      <mesh geometry={scene.edgeGeo} material={scene.edgeMat} frustumCulled={false} renderOrder={1} />
-      <points geometry={scene.nodeGeo} material={scene.nodeMat} frustumCulled={false} renderOrder={2} />
+      <mesh geometry={scene.edgeGeo} material={scene.edgeMat} frustumCulled={false} renderOrder={1}>
+        <lineBasicMaterial 
+          attach="userData.lineBasicMaterial"
+          color={isDarkMode ? "#FFFFFF" : "#0A0A0A"} 
+          transparent 
+          opacity={isDarkMode ? 0.3 : 0.15} 
+        />
+      </mesh>
+      <points geometry={scene.nodeGeo} material={scene.nodeMat} frustumCulled={false} renderOrder={2}>
+        <pointsMaterial 
+          attach="userData.pointsMaterial"
+          size={0.12} 
+          color={isDarkMode ? "#FFFFFF" : "#0A0A0A"} 
+          transparent 
+          opacity={isDarkMode ? 0.6 : 0.4} 
+          sizeAttenuation={true} 
+        />
+      </points>
     </group>
   )
 }
 
 // ─── Fixed background canvas ────────────────────────────────────────────────
-export default function StaticNeuromesh() {
+export default function StaticNeuromesh({ isDarkMode: propIsDark } = {}) {
+  const isDarkMode = useIsDark(propIsDark)
   return (
     <div
       aria-hidden="true"
-      className="neuromesh-bg fixed inset-0 z-[-10] pointer-events-none overflow-hidden opacity-[0.18] dark:opacity-[0.08]"
+      className="neuromesh-bg fixed inset-0 z-[-10] pointer-events-none overflow-hidden"
     >
       <Canvas
         orthographic
@@ -724,7 +761,7 @@ export default function StaticNeuromesh() {
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
         style={{ background: 'transparent' }}
       >
-        <NeuromeshScene />
+        <NeuromeshScene isDarkMode={isDarkMode} />
       </Canvas>
     </div>
   )
